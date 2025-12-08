@@ -1,0 +1,48 @@
+version: '3.8'
+
+# Docker Compose for Supabase Setup
+# This version runs only frontend and backend (no local database)
+# Use this when connecting to Supabase cloud database
+
+services:
+  # Backend API (connected to Supabase)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: work-progress-backend
+    environment:
+      PORT: 5000
+      NODE_ENV: production
+      # Update these with your Supabase credentials
+      DB_HOST: db.xxxxxxxxxxxxx.supabase.co
+      DB_PORT: 5432
+      DB_NAME: postgres
+      DB_USER: postgres
+      DB_PASSWORD: your_supabase_password
+      DB_SSL: "true"
+      JWT_SECRET: your_super_secret_jwt_key_change_in_production_2024
+      JWT_EXPIRES_IN: 7d
+    ports:
+      - "5000:5000"
+    networks:
+      - work-progress-network
+    restart: unless-stopped
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: work-progress-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - work-progress-network
+    restart: unless-stopped
+
+networks:
+  work-progress-network:
+    driver: bridge
