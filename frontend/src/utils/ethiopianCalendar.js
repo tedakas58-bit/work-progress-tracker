@@ -1,8 +1,32 @@
 // Ethiopian Government Fiscal Year Calendar
 // Starts with ሐምሌ (Hamle) and ends with ሰኔ (Sene)
-// Update CURRENT_ETHIOPIAN_MONTH when the month changes
+// Automatically calculates current month from system date
 
-export const CURRENT_ETHIOPIAN_MONTH = 5; // Currently: ኅዳር (Hidar) - 5th month
+// Auto-calculate current Ethiopian month from Gregorian date
+const calculateCurrentEthiopianMonth = () => {
+  const now = new Date();
+  const gregorianMonth = now.getMonth() + 1; // 1-12
+  
+  // Ethiopian Government Fiscal Year mapping:
+  const monthMapping = {
+    7: 1,   // July = Hamle
+    8: 2,   // August = Nehase
+    9: 3,   // September = Meskerem
+    10: 4,  // October = Tikimt
+    11: 5,  // November = Hidar
+    12: 6,  // December = Tahsas
+    1: 7,   // January = Tir
+    2: 8,   // February = Yekatit
+    3: 9,   // March = Megabit
+    4: 10,  // April = Miazia
+    5: 11,  // May = Ginbot
+    6: 12   // June = Sene
+  };
+  
+  return monthMapping[gregorianMonth] || 1;
+};
+
+export const CURRENT_ETHIOPIAN_MONTH = calculateCurrentEthiopianMonth();
 
 // Ethiopian Government Fiscal Year - Month Order
 export const ETHIOPIAN_MONTHS = [

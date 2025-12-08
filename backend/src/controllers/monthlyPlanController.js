@@ -1,14 +1,50 @@
 import pool from '../database/db.js';
 
-// Get current Ethiopian month (from 1-12)
+// Automatically calculate current Ethiopian month from system date
+// Ethiopian Government Fiscal Year: Hamle (July) = Month 1
 const getCurrentEthiopianMonth = () => {
-  // This should match the CURRENT_ETHIOPIAN_MONTH in frontend
-  return 5; // Currently: ኅዳር (Hidar) - Update this monthly
+  const now = new Date();
+  const gregorianMonth = now.getMonth() + 1; // 1-12
+  
+  // Ethiopian Government Fiscal Year mapping:
+  // July (7) = Hamle (1), August (8) = Nehase (2), September (9) = Meskerem (3)
+  // October (10) = Tikimt (4), November (11) = Hidar (5), December (12) = Tahsas (6)
+  // January (1) = Tir (7), February (2) = Yekatit (8), March (3) = Megabit (9)
+  // April (4) = Miazia (10), May (5) = Ginbot (11), June (6) = Sene (12)
+  
+  const monthMapping = {
+    7: 1,   // July = Hamle
+    8: 2,   // August = Nehase
+    9: 3,   // September = Meskerem
+    10: 4,  // October = Tikimt
+    11: 5,  // November = Hidar
+    12: 6,  // December = Tahsas
+    1: 7,   // January = Tir
+    2: 8,   // February = Yekatit
+    3: 9,   // March = Megabit
+    4: 10,  // April = Miazia
+    5: 11,  // May = Ginbot
+    6: 12   // June = Sene
+  };
+  
+  return monthMapping[gregorianMonth] || 1;
 };
 
-// Get current Ethiopian year
+// Automatically calculate current Ethiopian year
 const getCurrentEthiopianYear = () => {
-  return 2025; // Update as needed
+  const now = new Date();
+  const gregorianYear = now.getFullYear();
+  const gregorianMonth = now.getMonth() + 1;
+  
+  // Ethiopian year is 7-8 years behind Gregorian
+  // From September to December: Ethiopian year = Gregorian year - 7
+  // From January to August: Ethiopian year = Gregorian year - 8
+  
+  if (gregorianMonth >= 9) {
+    return gregorianYear - 7;
+  } else {
+    return gregorianYear - 8;
+  }
 };
 
 // Calculate deadline (18th of the month)
