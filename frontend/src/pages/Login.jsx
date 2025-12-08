@@ -111,18 +111,6 @@ function Login({ onLogin }) {
               )}
             </button>
           </form>
-
-          <div className="mt-6 p-4 bg-white/5 rounded-xl border border-white/10">
-            <p className="text-xs text-gray-300 text-center mb-2">Default Credentials:</p>
-            <div className="space-y-1 text-xs">
-              <p className="text-purple-300 font-mono text-center">
-                <span className="text-gray-400">Admin:</span> admin / admin123
-              </p>
-              <p className="text-pink-300 font-mono text-center">
-                <span className="text-gray-400">Branch:</span> branch1-10 / admin123
-              </p>
-            </div>
-          </div>
         </div>
 
         {/* Footer */}
