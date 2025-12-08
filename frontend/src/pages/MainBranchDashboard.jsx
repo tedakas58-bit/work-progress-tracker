@@ -73,28 +73,37 @@ function MainBranchDashboard({ user, onLogout }) {
     }
   };
 
-  const handleExport = (format) => {
-    const reportsToExport = selectedBranches.length > 0
-      ? allReports.filter(r => selectedBranches.includes(r.branch_name))
-      : allReports;
-    
-    if (reportsToExport.length === 0) {
-      alert(t('ምንም ሪፖርቶች የሉም', 'No reports to export'));
-      return;
+  const handleExport = async (format) => {
+    try {
+      const reportsToExport = selectedBranches.length > 0
+        ? allReports.filter(r => selectedBranches.includes(r.branch_name))
+        : allReports;
+      
+      console.log('Exporting reports:', { format, count: reportsToExport.length, reports: reportsToExport });
+      
+      if (reportsToExport.length === 0) {
+        alert(t('ምንም ሪፖርቶች የሉም', 'No reports to export'));
+        return;
+      }
+      
+      const month = currentPlan?.month || 6;
+      const year = currentPlan?.year || 2018;
+      
+      console.log('Export params:', { month, year, language });
+      
+      if (format === 'pdf') {
+        exportToPDF(reportsToExport, month, year, language);
+      } else if (format === 'excel') {
+        exportToExcel(reportsToExport, month, year, language);
+      } else if (format === 'word') {
+        await exportToWord(reportsToExport, month, year, language);
+      }
+      
+      setShowExportMenu(false);
+    } catch (error) {
+      console.error('Export error:', error);
+      alert(`Export failed: ${error.message}`);
     }
-    
-    const month = currentPlan?.month || 6;
-    const year = currentPlan?.year || 2018;
-    
-    if (format === 'pdf') {
-      exportToPDF(reportsToExport, month, year, language);
-    } else if (format === 'excel') {
-      exportToExcel(reportsToExport, month, year, language);
-    } else if (format === 'word') {
-      exportToWord(reportsToExport, month, year, language);
-    }
-    
-    setShowExportMenu(false);
   };
 
   const toggleBranchSelection = (branchName) => {
@@ -283,39 +292,46 @@ function MainBranchDashboard({ user, onLogout }) {
                     <BarChart3 size={28} />
                     {t('የአፈጻጸም ማጠቃለያ', 'Performance Summary')}
                   </h2>
-                  <div className="relative">
+                  <div className="relative z-50">
                     <button
                       onClick={() => setShowExportMenu(!showExportMenu)}
-                      className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 rounded-lg transition text-white text-sm font-semibold"
+                      className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 rounded-lg transition text-white text-sm font-semibold shadow-lg"
                     >
                       <Download size={16} />
                       {t('ሪፖርት አውርድ', 'Export Report')}
                     </button>
                     
                     {showExportMenu && (
-                      <div className="absolute right-0 mt-2 w-48 glass rounded-xl shadow-2xl border border-white/20 overflow-hidden z-10">
-                        <button
-                          onClick={() => handleExport('pdf')}
-                          className="w-full px-4 py-3 text-left text-white hover:bg-white/10 transition flex items-center gap-2"
-                        >
-                          <FileText size={16} />
-                          {t('PDF ውጣ', 'Export as PDF')}
-                        </button>
-                        <button
-                          onClick={() => handleExport('excel')}
-                          className="w-full px-4 py-3 text-left text-white hover:bg-white/10 transition flex items-center gap-2"
-                        >
-                          <FileText size={16} />
-                          {t('Excel ውጣ', 'Export as Excel')}
-                        </button>
-                        <button
-                          onClick={() => handleExport('word')}
-                          className="w-full px-4 py-3 text-left text-white hover:bg-white/10 transition flex items-center gap-2"
-                        >
-                          <FileText size={16} />
-                          {t('Word ውጣ', 'Export as Word')}
-                        </button>
-                      </div>
+                      <>
+                        {/* Backdrop to close menu when clicking outside */}
+                        <div 
+                          className="fixed inset-0 z-40" 
+                          onClick={() => setShowExportMenu(false)}
+                        />
+                        <div className="absolute right-0 mt-2 w-56 glass rounded-xl shadow-2xl border border-white/20 overflow-hidden z-50 bg-slate-800/95 backdrop-blur-xl">
+                          <button
+                            onClick={() => handleExport('pdf')}
+                            className="w-full px-4 py-3 text-left text-white hover:bg-white/20 transition flex items-center gap-2 font-medium"
+                          >
+                            <FileText size={16} />
+                            {t('PDF ውጣ', 'Export as PDF')}
+                          </button>
+                          <button
+                            onClick={() => handleExport('excel')}
+                            className="w-full px-4 py-3 text-left text-white hover:bg-white/20 transition flex items-center gap-2 font-medium"
+                          >
+                            <FileText size={16} />
+                            {t('Excel ውጣ', 'Export as Excel')}
+                          </button>
+                          <button
+                            onClick={() => handleExport('word')}
+                            className="w-full px-4 py-3 text-left text-white hover:bg-white/20 transition flex items-center gap-2 font-medium"
+                          >
+                            <FileText size={16} />
+                            {t('Word ውጣ', 'Export as Word')}
+                          </button>
+                        </div>
+                      </>
                     )}
                   </div>
                 </div>

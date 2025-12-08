@@ -18,7 +18,9 @@ The reports were marked as "late" during testing or when there was a bug in the 
 3. Click "SQL Editor" in left sidebar
 
 ### Step 2: Run Fix Script
-Copy and paste this into SQL Editor:
+**IMPORTANT**: Use the file `fix-late-reports-status.sql` which has the corrected SQL with proper table aliases.
+
+Or copy and paste this corrected version into SQL Editor:
 
 ```sql
 -- Fix reports marked as "late" that were actually submitted before deadline
@@ -36,14 +38,30 @@ SELECT
     u.branch_name,
     mr.status,
     mr.submitted_at,
-    mp.deadline
+    mp.deadline,
+    CASE 
+        WHEN mr.submitted_at < mp.deadline THEN 'On Time'
+        ELSE 'Actually Late'
+    END as actual_status
 FROM monthly_reports mr
 JOIN monthly_plans mp ON mr.monthly_plan_id = mp.id
 JOIN users u ON mr.branch_user_id = u.id
 WHERE mp.status = 'active'
   AND mr.status IN ('submitted', 'late')
 ORDER BY u.branch_name;
+
+-- Show updated statistics
+SELECT 
+    COUNT(*) as total_reports,
+    SUM(CASE WHEN mr.status = 'submitted' THEN 1 ELSE 0 END) as submitted,
+    SUM(CASE WHEN mr.status = 'pending' THEN 1 ELSE 0 END) as pending,
+    SUM(CASE WHEN mr.status = 'late' THEN 1 ELSE 0 END) as late
+FROM monthly_reports mr
+JOIN monthly_plans mp ON mr.monthly_plan_id = mp.id
+WHERE mp.status = 'active';
 ```
+
+**Note**: All `status` column references now have the `mr.` prefix to avoid ambiguous column errors since both `monthly_reports` and `monthly_plans` tables have a `status` column.
 
 ### Step 3: Click "Run"
 
