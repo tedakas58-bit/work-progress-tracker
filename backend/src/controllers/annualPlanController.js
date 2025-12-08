@@ -6,20 +6,20 @@ export const createAnnualPlan = async (req, res) => {
   try {
     await client.query('BEGIN');
     
-    const { title, description, year, targetAmount, targetUnits } = req.body;
+    const { title, description, year, targetAmount } = req.body;
     
-    // Create annual plan
+    // Create annual plan (targetUnits set to 0 for backward compatibility)
     const planResult = await client.query(
       `INSERT INTO annual_plans (title, description, year, target_amount, target_units, created_by)
        VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-      [title, description, year, targetAmount, targetUnits, req.user.id]
+      [title, description, year, targetAmount, 0, req.user.id]
     );
     
     const plan = planResult.rows[0];
     
     // Auto-generate 12 monthly periods
     const monthlyTarget = targetAmount / 12;
-    const monthlyUnits = Math.floor(targetUnits / 12);
+    const monthlyUnits = 0;
     
     for (let month = 1; month <= 12; month++) {
       const deadline = new Date(year, month, 0); // Last day of each month

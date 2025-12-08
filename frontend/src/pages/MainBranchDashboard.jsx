@@ -89,7 +89,7 @@ function MainBranchDashboard({ user, onLogout }) {
                       </div>
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                       <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/20 backdrop-blur-sm rounded-xl p-4 border border-blue-400/30">
                         <div className="flex items-center gap-2 text-blue-300 text-sm mb-1">
                           <Calendar size={16} />
@@ -100,21 +100,11 @@ function MainBranchDashboard({ user, onLogout }) {
                       
                       <div className="bg-gradient-to-br from-green-500/20 to-green-600/20 backdrop-blur-sm rounded-xl p-4 border border-green-400/30">
                         <div className="flex items-center gap-2 text-green-300 text-sm mb-1">
-                          <DollarSign size={16} />
-                          Target Amount
-                        </div>
-                        <div className="text-2xl font-bold text-white">
-                          ${plan.target_amount?.toLocaleString()}
-                        </div>
-                      </div>
-                      
-                      <div className="bg-gradient-to-br from-purple-500/20 to-purple-600/20 backdrop-blur-sm rounded-xl p-4 border border-purple-400/30">
-                        <div className="flex items-center gap-2 text-purple-300 text-sm mb-1">
                           <Target size={16} />
-                          Target Units
+                          Target Number
                         </div>
                         <div className="text-2xl font-bold text-white">
-                          {plan.target_units?.toLocaleString()}
+                          {plan.target_amount?.toLocaleString()}
                         </div>
                       </div>
                     </div>

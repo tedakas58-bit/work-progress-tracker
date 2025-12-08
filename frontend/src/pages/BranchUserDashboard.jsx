@@ -161,10 +161,10 @@ function BranchUserDashboard({ user, onLogout }) {
                         {new Date(report.year, report.month - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                       </td>
                       <td className="px-6 py-4 text-sm text-green-300 font-semibold">
-                        ${report.target_amount?.toLocaleString()}
+                        {report.target_amount?.toLocaleString()}
                       </td>
                       <td className="px-6 py-4 text-sm text-blue-300 font-semibold">
-                        ${report.achieved_amount?.toLocaleString() || '0'}
+                        {report.achieved_amount?.toLocaleString() || '0'}
                       </td>
                       <td className="px-6 py-4 text-sm">
                         <div className="flex items-center space-x-3">

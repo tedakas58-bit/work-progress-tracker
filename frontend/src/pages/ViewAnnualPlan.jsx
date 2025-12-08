@@ -86,23 +86,16 @@ function ViewAnnualPlan({ user, onLogout }) {
           <h1 className="text-4xl font-bold text-white mb-2">{plan.title}</h1>
           <p className="text-purple-200 mb-6">{plan.description}</p>
 
-          <div className="grid grid-cols-4 gap-6">
+          <div className="grid grid-cols-3 gap-6">
             <div className="bg-blue-50 rounded-lg p-4">
               <div className="text-sm text-gray-600 mb-1">Year</div>
               <div className="text-2xl font-bold text-blue-600">{plan.year}</div>
             </div>
             
             <div className="bg-green-50 rounded-lg p-4">
-              <div className="text-sm text-gray-600 mb-1">Target Amount</div>
+              <div className="text-sm text-gray-600 mb-1">Target Number</div>
               <div className="text-2xl font-bold text-green-600">
-                ${plan.target_amount?.toLocaleString()}
-              </div>
-            </div>
-            
-            <div className="bg-purple-50 rounded-lg p-4">
-              <div className="text-sm text-gray-600 mb-1">Achieved Amount</div>
-              <div className="text-2xl font-bold text-purple-600">
-                ${plan.total_achieved_amount?.toLocaleString() || '0'}
+                {plan.target_amount?.toLocaleString()}
               </div>
             </div>
             
@@ -154,8 +147,7 @@ function ViewAnnualPlan({ user, onLogout }) {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Month</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Target Amount</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Target Units</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Target Number</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Deadline</th>
                 </tr>
               </thead>
@@ -166,10 +158,7 @@ function ViewAnnualPlan({ user, onLogout }) {
                       {new Date(period.year, period.month - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900">
-                      ${period.target_amount?.toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">
-                      {period.target_units?.toLocaleString()}
+                      {period.target_amount?.toLocaleString()}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900">
                       {new Date(period.deadline).toLocaleDateString()}

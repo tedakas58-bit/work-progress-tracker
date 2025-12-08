@@ -11,7 +11,6 @@ function CreateAnnualPlan({ user, onLogout }) {
     description: '',
     year: new Date().getFullYear(),
     targetAmount: '',
-    targetUnits: '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -105,35 +104,20 @@ function CreateAnnualPlan({ user, onLogout }) {
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-purple-200 mb-2">
-                  Target Amount ($) *
-                </label>
-                <input
-                  type="number"
-                  value={formData.targetAmount}
-                  onChange={(e) => setFormData({ ...formData, targetAmount: parseFloat(e.target.value) })}
-                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition backdrop-blur-sm"
-                  placeholder="1000000"
-                  step="0.01"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-purple-200 mb-2">
-                  Target Units *
-                </label>
-                <input
-                  type="number"
-                  value={formData.targetUnits}
-                  onChange={(e) => setFormData({ ...formData, targetUnits: parseInt(e.target.value) })}
-                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition backdrop-blur-sm"
-                  placeholder="10000"
-                  required
-                />
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-purple-200 mb-2">
+                Target Number *
+              </label>
+              <input
+                type="number"
+                value={formData.targetAmount}
+                onChange={(e) => setFormData({ ...formData, targetAmount: parseFloat(e.target.value) })}
+                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition backdrop-blur-sm"
+                placeholder="e.g., 1000 (number of people)"
+                step="0.01"
+                required
+              />
+              <p className="text-sm text-purple-300 mt-2">Enter the target number of people or items to track</p>
             </div>
 
             <div className="bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-400/30 rounded-xl p-5 backdrop-blur-sm">
