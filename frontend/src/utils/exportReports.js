@@ -92,7 +92,7 @@ export const exportToPDF = (reports, month, year, language = 'en') => {
   // Draw bars
   sortedReports.forEach((report, index) => {
     const progress = Number(report.progress_percentage) || 0;
-    const barHeight = (progress / maxProgress) * chartHeight;
+    const barHeight = Math.max((progress / maxProgress) * chartHeight, 1); // Minimum 1px height
     const x = 14 + (index * (barWidth + 2)) + 5;
     const y = chartStartY + chartHeight - barHeight;
     
@@ -104,20 +104,34 @@ export const exportToPDF = (reports, month, year, language = 'en') => {
     else if (progress >= 60) color = [251, 146, 60]; // Orange
     else color = [239, 68, 68]; // Red
     
+    // Draw bar with border
     doc.setFillColor(...color);
-    doc.rect(x, y, barWidth, barHeight, 'F');
+    doc.setDrawColor(100);
+    doc.setLineWidth(0.3);
+    doc.rect(x, y, barWidth, barHeight, 'FD');
     
-    // Branch name (rotated)
-    doc.setFontSize(7);
+    // Branch name (vertical or angled based on space)
+    doc.setFontSize(6);
     doc.setTextColor(0);
-    doc.text(report.branch_name || '', x + barWidth/2, chartStartY + chartHeight + 5, {
+    const branchName = (report.branch_name || '').substring(0, 10); // Limit length
+    doc.text(branchName, x + barWidth/2, chartStartY + chartHeight + 4, {
       angle: 45,
-      maxWidth: 30
+      align: 'left'
     });
     
-    // Progress value on top of bar
-    doc.setFontSize(7);
-    doc.text(`${progress.toFixed(0)}%`, x + barWidth/2, y - 2, { align: 'center' });
+    // Progress value on top of bar (only if bar is tall enough)
+    if (barHeight > 5) {
+      doc.setFontSize(6);
+      doc.setTextColor(0);
+      doc.text(`${progress.toFixed(0)}%`, x + barWidth/2, y - 1, { align: 'center' });
+    }
+    
+    // Grade letter inside bar if tall enough
+    if (barHeight > 10) {
+      doc.setFontSize(7);
+      doc.setTextColor(255, 255, 255);
+      doc.text(gradeInfo.grade, x + barWidth/2, y + barHeight/2 + 2, { align: 'center' });
+    }
   });
   
   // Grade Distribution Pie Chart
@@ -133,34 +147,81 @@ export const exportToPDF = (reports, month, year, language = 'en') => {
     gradeDistribution[gradeInfo.grade] = (gradeDistribution[gradeInfo.grade] || 0) + 1;
   });
   
-  // Draw pie chart
+  // Draw pie chart with proper wedges
   const pieX = 105;
   const pieYCenter = pieY + 30;
   const pieRadius = 25;
-  let startAngle = 0;
+  let startAngle = -Math.PI / 2; // Start from top
   const colors = {
     'A+': [16, 185, 129], 'A': [34, 197, 94], 'B+': [59, 130, 246], 'B': [96, 165, 250],
     'C+': [251, 146, 60], 'C': [251, 191, 36], 'D': [239, 68, 68], 'F': [220, 38, 38]
   };
   
+  // Draw legend
+  let legendY = pieY + 15;
+  Object.entries(gradeDistribution).forEach(([grade, count], index) => {
+    const color = colors[grade] || [150, 150, 150];
+    const legendX = 20;
+    const currentY = legendY + (index * 8);
+    
+    // Color box
+    doc.setFillColor(...color);
+    doc.rect(legendX, currentY - 3, 5, 5, 'F');
+    
+    // Label
+    doc.setFontSize(9);
+    doc.setTextColor(0);
+    doc.text(`${grade}: ${count} (${((count/reports.length)*100).toFixed(0)}%)`, legendX + 8, currentY + 1);
+  });
+  
+  // Draw pie slices
   Object.entries(gradeDistribution).forEach(([grade, count]) => {
     const angle = (count / reports.length) * 2 * Math.PI;
     const color = colors[grade] || [150, 150, 150];
+    const endAngle = startAngle + angle;
+    
+    // Draw wedge
+    doc.setFillColor(...color);
+    doc.setDrawColor(255, 255, 255);
+    doc.setLineWidth(1);
+    
+    // Create path for wedge
+    const steps = 50;
+    const angleStep = angle / steps;
+    
+    // Start at center
+    doc.moveTo(pieX, pieYCenter);
+    
+    // Draw arc
+    for (let i = 0; i <= steps; i++) {
+      const currentAngle = startAngle + (i * angleStep);
+      const x = pieX + pieRadius * Math.cos(currentAngle);
+      const y = pieYCenter + pieRadius * Math.sin(currentAngle);
+      if (i === 0) {
+        doc.line(pieX, pieYCenter, x, y);
+      }
+    }
+    
+    // Draw the arc using lines
+    const arcX1 = pieX + pieRadius * Math.cos(startAngle);
+    const arcY1 = pieYCenter + pieRadius * Math.sin(startAngle);
+    const arcX2 = pieX + pieRadius * Math.cos(endAngle);
+    const arcY2 = pieYCenter + pieRadius * Math.sin(endAngle);
     
     doc.setFillColor(...color);
     
-    // Draw pie slice
-    const endAngle = startAngle + angle;
-    doc.circle(pieX, pieYCenter, pieRadius, 'F');
-    
-    // Draw wedge (simplified - just showing concept)
-    const midAngle = startAngle + angle / 2;
-    const labelX = pieX + (pieRadius + 15) * Math.cos(midAngle);
-    const labelY = pieYCenter + (pieRadius + 15) * Math.sin(midAngle);
-    
-    doc.setFontSize(9);
-    doc.setTextColor(0);
-    doc.text(`${grade}: ${count}`, labelX, labelY, { align: 'center' });
+    // Simple wedge approximation
+    const segments = 20;
+    for (let i = 0; i < segments; i++) {
+      const a1 = startAngle + (angle * i / segments);
+      const a2 = startAngle + (angle * (i + 1) / segments);
+      const x1 = pieX + pieRadius * Math.cos(a1);
+      const y1 = pieYCenter + pieRadius * Math.sin(a1);
+      const x2 = pieX + pieRadius * Math.cos(a2);
+      const y2 = pieYCenter + pieRadius * Math.sin(a2);
+      
+      doc.triangle(pieX, pieYCenter, x1, y1, x2, y2, 'FD');
+    }
     
     startAngle = endAngle;
   });
