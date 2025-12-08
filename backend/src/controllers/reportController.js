@@ -6,44 +6,48 @@ export const submitMonthlyReport = async (req, res) => {
   try {
     await client.query('BEGIN');
     
-    const { reportId, achievedAmount, achievedUnits, notes } = req.body;
+    const { reportId, achievedAmount, notes } = req.body;
     
-    // Get report and period info
+    // Get report and plan info (NEW SYSTEM: monthly_plans)
     const reportResult = await client.query(
-      `SELECT mr.*, mp.target_amount, mp.target_units, mp.deadline, mp.annual_plan_id, mp.month
+      `SELECT mr.*, mp.target_amount, mp.deadline, mp.month, mp.year
        FROM monthly_reports mr
-       JOIN monthly_periods mp ON mr.monthly_period_id = mp.id
+       JOIN monthly_plans mp ON mr.monthly_plan_id = mp.id
        WHERE mr.id = $1 AND mr.branch_user_id = $2`,
       [reportId, req.user.id]
     );
     
     if (reportResult.rows.length === 0) {
+      await client.query('ROLLBACK');
       return res.status(404).json({ error: 'Report not found' });
     }
     
     const report = reportResult.rows[0];
-    const progressPercentage = (achievedAmount / report.target_amount) * 100;
+    
+    // Calculate progress percentage
+    const progressPercentage = report.target_amount > 0 
+      ? (achievedAmount / report.target_amount) * 100 
+      : 0;
+    
+    // Check if submission is late (after deadline)
     const isLate = new Date() > new Date(report.deadline);
     
     // Update monthly report
     await client.query(
       `UPDATE monthly_reports 
-       SET achieved_amount = $1, achieved_units = $2, progress_percentage = $3, 
-           notes = $4, status = $5, submitted_at = NOW(), updated_at = NOW()
-       WHERE id = $6`,
-      [achievedAmount, achievedUnits, progressPercentage, notes, isLate ? 'late' : 'submitted', reportId]
+       SET achieved_amount = $1, progress_percentage = $2, 
+           notes = $3, status = $4, submitted_at = NOW(), updated_at = NOW()
+       WHERE id = $5`,
+      [achievedAmount, progressPercentage, notes, isLate ? 'late' : 'submitted', reportId]
     );
-    
-    // Recalculate quarterly aggregation
-    const quarter = Math.ceil(report.month / 3);
-    await recalculateQuarterly(client, report.annual_plan_id, quarter);
-    
-    // Recalculate annual aggregation
-    await recalculateAnnual(client, report.annual_plan_id);
     
     await client.query('COMMIT');
     
-    res.json({ message: 'Report submitted successfully' });
+    res.json({ 
+      message: 'Report submitted successfully',
+      progress: progressPercentage,
+      status: isLate ? 'late' : 'submitted'
+    });
   } catch (error) {
     await client.query('ROLLBACK');
     console.error('Submit report error:', error);
@@ -53,64 +57,15 @@ export const submitMonthlyReport = async (req, res) => {
   }
 };
 
-async function recalculateQuarterly(client, annualPlanId, quarter) {
-  const startMonth = (quarter - 1) * 3 + 1;
-  const endMonth = quarter * 3;
-  
-  const result = await client.query(
-    `SELECT 
-       COALESCE(SUM(mr.achieved_amount), 0) as total_amount,
-       COALESCE(SUM(mr.achieved_units), 0) as total_units,
-       COALESCE(AVG(mr.progress_percentage), 0) as avg_progress
-     FROM monthly_reports mr
-     JOIN monthly_periods mp ON mr.monthly_period_id = mp.id
-     WHERE mp.annual_plan_id = $1 AND mp.month BETWEEN $2 AND $3
-       AND mr.status IN ('submitted', 'late')`,
-    [annualPlanId, startMonth, endMonth]
-  );
-  
-  const data = result.rows[0];
-  
-  await client.query(
-    `UPDATE quarterly_aggregations 
-     SET total_achieved_amount = $1, total_achieved_units = $2, 
-         progress_percentage = $3, updated_at = NOW()
-     WHERE annual_plan_id = $4 AND quarter = $5`,
-    [data.total_amount, data.total_units, data.avg_progress, annualPlanId, quarter]
-  );
-}
-
-async function recalculateAnnual(client, annualPlanId) {
-  const result = await client.query(
-    `SELECT 
-       COALESCE(SUM(mr.achieved_amount), 0) as total_amount,
-       COALESCE(SUM(mr.achieved_units), 0) as total_units,
-       COALESCE(AVG(mr.progress_percentage), 0) as avg_progress
-     FROM monthly_reports mr
-     JOIN monthly_periods mp ON mr.monthly_period_id = mp.id
-     WHERE mp.annual_plan_id = $1 AND mr.status IN ('submitted', 'late')`,
-    [annualPlanId]
-  );
-  
-  const data = result.rows[0];
-  
-  await client.query(
-    `UPDATE annual_aggregations 
-     SET total_achieved_amount = $1, total_achieved_units = $2, 
-         progress_percentage = $3, updated_at = NOW()
-     WHERE annual_plan_id = $4`,
-    [data.total_amount, data.total_units, data.avg_progress, annualPlanId]
-  );
-}
+// Note: Quarterly and annual aggregations removed - using monthly auto-renewal system
 
 export const getMyReports = async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT mr.*, mp.month, mp.year, mp.target_amount, mp.target_units, mp.deadline,
-              ap.title as plan_title
+      `SELECT mr.*, mp.month, mp.year, mp.target_amount, mp.deadline,
+              mp.title as plan_title
        FROM monthly_reports mr
-       JOIN monthly_periods mp ON mr.monthly_period_id = mp.id
-       JOIN annual_plans ap ON mp.annual_plan_id = ap.id
+       JOIN monthly_plans mp ON mr.monthly_plan_id = mp.id
        WHERE mr.branch_user_id = $1
        ORDER BY mp.year DESC, mp.month DESC`,
       [req.user.id]
