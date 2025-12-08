@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { reportAPI } from '../services/api';
 import Navbar from '../components/Navbar';
 import { FileText, Clock, CheckCircle, AlertCircle, TrendingUp, Target, Award } from 'lucide-react';
+import { filterFutureReports, getCurrentEthiopianMonth } from '../utils/ethiopianCalendar';
 
 function BranchUserDashboard({ user, onLogout }) {
   const [reports, setReports] = useState([]);
@@ -15,7 +16,12 @@ function BranchUserDashboard({ user, onLogout }) {
   const fetchReports = async () => {
     try {
       const response = await reportAPI.getMyReports();
-      setReports(response.data);
+      
+      // Filter reports to show only future months based on Ethiopian calendar
+      // Currently in month 5 (ጥር - Tir), so show months 6-12
+      const filteredReports = filterFutureReports(response.data);
+      
+      setReports(filteredReports);
     } catch (error) {
       console.error('Failed to fetch reports:', error);
     } finally {
@@ -44,6 +50,7 @@ function BranchUserDashboard({ user, onLogout }) {
     );
   };
 
+  // Stats are calculated from filtered reports (only future months)
   const stats = {
     total: reports.length,
     pending: reports.filter(r => r.status === 'pending').length,
@@ -63,7 +70,7 @@ function BranchUserDashboard({ user, onLogout }) {
                 <Award className="text-yellow-400" size={32} />
                 Branch Dashboard
               </h1>
-              <p className="text-purple-200">Submit and track your monthly reports</p>
+              <p className="text-purple-200">Submit and track your monthly reports (Showing upcoming months only)</p>
             </div>
             
             <Link
