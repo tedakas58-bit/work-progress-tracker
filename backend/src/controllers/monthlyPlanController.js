@@ -145,8 +145,8 @@ export const autoCreateMonthlyPlan = async (client = null) => {
 };
 
 /**
- * Check if current month has ended (past 18th deadline)
- * If yes, archive current plan and create next month's plan
+ * Check if it's time to start next month (on the 20th)
+ * Deadline is 18th, but next month starts on 20th (2-day gap)
  */
 export const checkAndRenewMonthlyPlan = async () => {
   const client = await pool.connect();
@@ -157,6 +157,7 @@ export const checkAndRenewMonthlyPlan = async () => {
     const currentMonth = getCurrentEthiopianMonth();
     const currentYear = getCurrentEthiopianYear();
     const today = new Date();
+    const currentDay = today.getDate();
     
     // Get current active plan
     const activePlan = await client.query(
@@ -173,11 +174,11 @@ export const checkAndRenewMonthlyPlan = async () => {
     }
     
     const plan = activePlan.rows[0];
-    const deadline = new Date(plan.deadline);
     
-    // Check if deadline has passed
-    if (today > deadline) {
-      console.log(`Deadline passed for month ${currentMonth}. Archiving and creating next month...`);
+    // Check if it's the 20th or later (time to start next month)
+    // Deadline is 18th, next month starts on 20th
+    if (currentDay >= 20) {
+      console.log(`It's day ${currentDay}. Time to start next month. Archiving month ${currentMonth}...`);
       
       // Archive current plan
       await client.query(
@@ -192,6 +193,18 @@ export const checkAndRenewMonthlyPlan = async () => {
       if (nextMonth > 12) {
         nextMonth = 1;
         nextYear = currentYear + 1;
+      }
+      
+      // Check if next month's plan already exists
+      const existingNextPlan = await client.query(
+        `SELECT id FROM monthly_plans WHERE month = $1 AND year = $2`,
+        [nextMonth, nextYear]
+      );
+      
+      if (existingNextPlan.rows.length > 0) {
+        console.log(`Next month plan already exists for month ${nextMonth}`);
+        await client.query('COMMIT');
+        return;
       }
       
       // Create next month's plan with same target
@@ -227,7 +240,7 @@ export const checkAndRenewMonthlyPlan = async () => {
         );
       }
       
-      console.log(`✅ Created new plan for month ${nextMonth}, year ${nextYear}`);
+      console.log(`✅ Created new plan for month ${nextMonth}, year ${nextYear} (starts on 20th)`);
     }
     
     await client.query('COMMIT');
