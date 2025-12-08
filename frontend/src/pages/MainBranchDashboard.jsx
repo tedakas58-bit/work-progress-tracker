@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
 import { monthlyPlanAPI, reportAPI } from '../services/api';
 import Navbar from '../components/Navbar';
-import { Calendar, TrendingUp, Users, Sparkles, Target, Edit, RefreshCw } from 'lucide-react';
+import { Calendar, TrendingUp, Users, Sparkles, Target, Edit, RefreshCw, BarChart3, Download, Award, FileText } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { getEthiopianMonthName } from '../utils/ethiopianCalendar';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { calculateGrade, getGradeDescription } from '../utils/grading';
+import { exportToPDF, exportToExcel, exportToWord } from '../utils/exportReports';
 
 function MainBranchDashboard({ user, onLogout }) {
   const { t, language } = useLanguage();
@@ -15,6 +18,8 @@ function MainBranchDashboard({ user, onLogout }) {
   const [updating, setUpdating] = useState(false);
   const [allReports, setAllReports] = useState([]);
   const [loadingReports, setLoadingReports] = useState(false);
+  const [selectedBranches, setSelectedBranches] = useState([]);
+  const [showExportMenu, setShowExportMenu] = useState(false);
 
   useEffect(() => {
     fetchCurrentPlan();
@@ -68,6 +73,46 @@ function MainBranchDashboard({ user, onLogout }) {
     }
   };
 
+  const handleExport = (format) => {
+    const reportsToExport = selectedBranches.length > 0
+      ? allReports.filter(r => selectedBranches.includes(r.branch_name))
+      : allReports;
+    
+    if (reportsToExport.length === 0) {
+      alert(t('ምንም ሪፖርቶች የሉም', 'No reports to export'));
+      return;
+    }
+    
+    const month = currentPlan?.month || 6;
+    const year = currentPlan?.year || 2018;
+    
+    if (format === 'pdf') {
+      exportToPDF(reportsToExport, month, year, language);
+    } else if (format === 'excel') {
+      exportToExcel(reportsToExport, month, year, language);
+    } else if (format === 'word') {
+      exportToWord(reportsToExport, month, year, language);
+    }
+    
+    setShowExportMenu(false);
+  };
+
+  const toggleBranchSelection = (branchName) => {
+    setSelectedBranches(prev =>
+      prev.includes(branchName)
+        ? prev.filter(b => b !== branchName)
+        : [...prev, branchName]
+    );
+  };
+
+  const selectAllBranches = () => {
+    if (selectedBranches.length === allReports.length) {
+      setSelectedBranches([]);
+    } else {
+      setSelectedBranches(allReports.map(r => r.branch_name));
+    }
+  };
+
   const getStatusBadge = (status) => {
     const styles = {
       pending: 'bg-yellow-500/20 text-yellow-300 border-yellow-400/30',
@@ -87,6 +132,27 @@ function MainBranchDashboard({ user, onLogout }) {
       </span>
     );
   };
+
+  // Prepare chart data
+  const chartData = allReports.map(report => ({
+    name: report.branch_name,
+    progress: Number(report.progress_percentage) || 0,
+    achieved: report.achieved_amount || 0,
+    target: report.target_amount || 0
+  })).sort((a, b) => b.progress - a.progress);
+
+  const gradeDistribution = allReports.reduce((acc, report) => {
+    const gradeInfo = calculateGrade(report.progress_percentage || 0);
+    acc[gradeInfo.grade] = (acc[gradeInfo.grade] || 0) + 1;
+    return acc;
+  }, {});
+
+  const gradeChartData = Object.entries(gradeDistribution).map(([grade, count]) => ({
+    name: grade,
+    value: count
+  }));
+
+  const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444'];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
@@ -204,22 +270,186 @@ function MainBranchDashboard({ user, onLogout }) {
               )}
             </div>
 
+            {/* Performance Summary Section */}
+            {allReports.length > 0 && (
+              <div className="glass rounded-2xl shadow-xl p-6 backdrop-blur-xl border border-white/20">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                    <BarChart3 size={28} />
+                    {t('የአፈጻጸም ማጠቃለያ', 'Performance Summary')}
+                  </h2>
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowExportMenu(!showExportMenu)}
+                      className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 rounded-lg transition text-white text-sm font-semibold"
+                    >
+                      <Download size={16} />
+                      {t('ሪፖርት አውርድ', 'Export Report')}
+                    </button>
+                    
+                    {showExportMenu && (
+                      <div className="absolute right-0 mt-2 w-48 glass rounded-xl shadow-2xl border border-white/20 overflow-hidden z-10">
+                        <button
+                          onClick={() => handleExport('pdf')}
+                          className="w-full px-4 py-3 text-left text-white hover:bg-white/10 transition flex items-center gap-2"
+                        >
+                          <FileText size={16} />
+                          {t('PDF ውጣ', 'Export as PDF')}
+                        </button>
+                        <button
+                          onClick={() => handleExport('excel')}
+                          className="w-full px-4 py-3 text-left text-white hover:bg-white/10 transition flex items-center gap-2"
+                        >
+                          <FileText size={16} />
+                          {t('Excel ውጣ', 'Export as Excel')}
+                        </button>
+                        <button
+                          onClick={() => handleExport('word')}
+                          className="w-full px-4 py-3 text-left text-white hover:bg-white/10 transition flex items-center gap-2"
+                        >
+                          <FileText size={16} />
+                          {t('Word ውጣ', 'Export as Word')}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
 
+                {/* Branch Performance Chart */}
+                <div className="mb-8">
+                  <h3 className="text-lg font-semibold text-white mb-4">{t('የቅርንጫፍ እድገት ንፅፅር', 'Branch Progress Comparison')}</h3>
+                  <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={chartData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" />
+                        <XAxis dataKey="name" stroke="#a78bfa" angle={-45} textAnchor="end" height={100} />
+                        <YAxis stroke="#a78bfa" />
+                        <Tooltip
+                          contentStyle={{ backgroundColor: '#1e1b4b', border: '1px solid #a78bfa', borderRadius: '8px' }}
+                          labelStyle={{ color: '#fff' }}
+                        />
+                        <Legend />
+                        <Bar dataKey="progress" fill="#8b5cf6" name={t('እድገት %', 'Progress %')} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* Grade Distribution */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                  <div>
+                    <h3 className="text-lg font-semibold text-white mb-4">{t('የደረጃ ስርጭት', 'Grade Distribution')}</h3>
+                    <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                      <ResponsiveContainer width="100%" height={250}>
+                        <PieChart>
+                          <Pie
+                            data={gradeChartData}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                            outerRadius={80}
+                            fill="#8884d8"
+                            dataKey="value"
+                          >
+                            {gradeChartData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                          </Pie>
+                          <Tooltip
+                            contentStyle={{ backgroundColor: '#1e1b4b', border: '1px solid #a78bfa', borderRadius: '8px' }}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+
+                  {/* Branch Grades */}
+                  <div>
+                    <h3 className="text-lg font-semibold text-white mb-4">{t('የቅርንጫፍ ደረጃዎች', 'Branch Grades')}</h3>
+                    <div className="space-y-2 max-h-[250px] overflow-y-auto">
+                      {chartData.map((branch) => {
+                        const gradeInfo = calculateGrade(branch.progress);
+                        return (
+                          <div key={branch.name} className={`${gradeInfo.bgColor} border ${gradeInfo.borderColor} rounded-lg p-3 flex items-center justify-between`}>
+                            <div className="flex items-center gap-3">
+                              <div className={`w-12 h-12 ${gradeInfo.bgColor} border-2 ${gradeInfo.borderColor} rounded-lg flex items-center justify-center`}>
+                                <span className={`text-xl font-bold ${gradeInfo.color}`}>{gradeInfo.grade}</span>
+                              </div>
+                              <div>
+                                <div className="text-white font-semibold">{branch.name}</div>
+                                <div className="text-xs text-gray-300">{getGradeDescription(gradeInfo.grade, language)}</div>
+                              </div>
+                            </div>
+                            <div className={`text-2xl font-bold ${gradeInfo.color}`}>
+                              {branch.progress.toFixed(1)}%
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Top Performers */}
+                <div className="bg-gradient-to-br from-yellow-500/20 to-orange-500/20 border border-yellow-400/30 rounded-xl p-5">
+                  <h3 className="font-semibold text-yellow-200 mb-3 flex items-center gap-2">
+                    <Award size={20} />
+                    {t('ምርጥ አፈጻጸም ያላቸው', 'Top Performers')}
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {chartData.slice(0, 3).map((branch, index) => (
+                      <div key={branch.name} className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
+                            index === 0 ? 'bg-yellow-500 text-yellow-900' :
+                            index === 1 ? 'bg-gray-400 text-gray-900' :
+                            'bg-orange-600 text-orange-100'
+                          }`}>
+                            {index + 1}
+                          </div>
+                          <span className="text-white font-semibold">{branch.name}</span>
+                        </div>
+                        <div className="text-2xl font-bold text-yellow-300">{branch.progress.toFixed(1)}%</div>
+                        <div className="text-sm text-yellow-100 mt-1">
+                          {branch.achieved.toLocaleString()} / {branch.target.toLocaleString()}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* All Branch Reports - Month 6 Only */}
             <div className="glass rounded-2xl shadow-xl backdrop-blur-xl border border-white/20">
               <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between">
-                <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                  <Users size={24} />
-                  {t('የሁሉም ቅርንጫፎች ሪፖርቶች - ወር 6', 'All Branch Reports - Month 6')}
-                </h2>
-                <button
-                  onClick={fetchAllReports}
-                  className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition text-white text-sm"
-                >
-                  <RefreshCw size={16} />
-                  {t('አድስ', 'Refresh')}
-                </button>
+                <div>
+                  <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                    <Users size={24} />
+                    {t('የሁሉም ቅርንጫፎች ሪፖርቶች - ወር 6', 'All Branch Reports - Month 6')}
+                  </h2>
+                  {selectedBranches.length > 0 && (
+                    <p className="text-sm text-purple-300 mt-1">
+                      {selectedBranches.length} {t('ቅርንጫፎች ተመርጠዋል', 'branches selected')}
+                    </p>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={selectAllBranches}
+                    className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition text-white text-sm"
+                  >
+                    {selectedBranches.length === allReports.length ? t('ሁሉንም አትመርጥ', 'Deselect All') : t('ሁሉንም ምረጥ', 'Select All')}
+                  </button>
+                  <button
+                    onClick={fetchAllReports}
+                    className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition text-white text-sm"
+                  >
+                    <RefreshCw size={16} />
+                    {t('አድስ', 'Refresh')}
+                  </button>
+                </div>
               </div>
               
               {loadingReports ? (
@@ -236,17 +466,29 @@ function MainBranchDashboard({ user, onLogout }) {
                   <table className="w-full">
                     <thead className="bg-white/5 border-b border-white/10">
                       <tr>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-purple-300 uppercase tracking-wider w-12"></th>
                         <th className="px-6 py-4 text-left text-xs font-semibold text-purple-300 uppercase tracking-wider">{t('ቅርንጫፍ', 'Branch')}</th>
                         <th className="px-6 py-4 text-left text-xs font-semibold text-purple-300 uppercase tracking-wider">{t('ዒላማ', 'Target')}</th>
                         <th className="px-6 py-4 text-left text-xs font-semibold text-purple-300 uppercase tracking-wider">{t('የተሳካ', 'Achieved')}</th>
                         <th className="px-6 py-4 text-left text-xs font-semibold text-purple-300 uppercase tracking-wider">{t('እድገት', 'Progress')}</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-purple-300 uppercase tracking-wider">{t('ደረጃ', 'Grade')}</th>
                         <th className="px-6 py-4 text-left text-xs font-semibold text-purple-300 uppercase tracking-wider">{t('ሁኔታ', 'Status')}</th>
                         <th className="px-6 py-4 text-left text-xs font-semibold text-purple-300 uppercase tracking-wider">{t('የገባበት ቀን', 'Submitted')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/10">
-                      {allReports.map((report) => (
+                      {allReports.map((report) => {
+                        const gradeInfo = calculateGrade(report.progress_percentage || 0);
+                        return (
                         <tr key={report.id} className="hover:bg-white/5 transition">
+                          <td className="px-6 py-4">
+                            <input
+                              type="checkbox"
+                              checked={selectedBranches.includes(report.branch_name)}
+                              onChange={() => toggleBranchSelection(report.branch_name)}
+                              className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                            />
+                          </td>
                           <td className="px-6 py-4 text-sm text-white font-medium">{report.branch_name}</td>
                           <td className="px-6 py-4 text-sm text-green-300 font-semibold">
                             {report.target_amount?.toLocaleString()}
@@ -267,12 +509,18 @@ function MainBranchDashboard({ user, onLogout }) {
                               </span>
                             </div>
                           </td>
+                          <td className="px-6 py-4">
+                            <div className={`${gradeInfo.bgColor} border ${gradeInfo.borderColor} rounded-lg px-3 py-1 inline-flex items-center gap-2`}>
+                              <span className={`text-lg font-bold ${gradeInfo.color}`}>{gradeInfo.grade}</span>
+                            </div>
+                          </td>
                           <td className="px-6 py-4">{getStatusBadge(report.status)}</td>
                           <td className="px-6 py-4 text-sm text-purple-200">
                             {report.submitted_at ? new Date(report.submitted_at).toLocaleString() : '-'}
                           </td>
                         </tr>
-                      ))}
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>

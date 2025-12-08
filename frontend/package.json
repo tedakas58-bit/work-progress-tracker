@@ -13,7 +13,12 @@
     "react-router-dom": "^6.20.0",
     "axios": "^1.6.2",
     "recharts": "^2.10.3",
-    "lucide-react": "^0.294.0"
+    "lucide-react": "^0.294.0",
+    "jspdf": "^2.5.1",
+    "jspdf-autotable": "^3.8.2",
+    "xlsx": "^0.18.5",
+    "docx": "^8.5.0",
+    "file-saver": "^2.0.5"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.2.1",

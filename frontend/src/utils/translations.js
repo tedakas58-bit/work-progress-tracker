@@ -303,3 +303,30 @@ export const getMonthName = (monthNumber) => {
 export const getStatusText = (status) => {
   return translations.status[status] || status;
 };
+
+
+// Additional translations for summary and export features
+export const summaryTranslations = {
+  'የአፈጻጸም ማጠቃለያ': 'Performance Summary',
+  'ሪፖርት አውርድ': 'Export Report',
+  'PDF ውጣ': 'Export as PDF',
+  'Excel ውጣ': 'Export as Excel',
+  'Word ውጣ': 'Export as Word',
+  'የቅርንጫፍ እድገት ንፅፅር': 'Branch Progress Comparison',
+  'የደረጃ ስርጭት': 'Grade Distribution',
+  'የቅርንጫፍ ደረጃዎች': 'Branch Grades',
+  'ምርጥ አፈጻጸም ያላቸው': 'Top Performers',
+  'ደረጃ': 'Grade',
+  'እድገት %': 'Progress %',
+  'ቅርንጫፎች ተመርጠዋል': 'branches selected',
+  'ሁሉንም አትመርጥ': 'Deselect All',
+  'ሁሉንም ምረጥ': 'Select All',
+  'ምንም ሪፖርቶች የሉም': 'No reports to export',
+  'እጅግ በጣም ጥሩ': 'Outstanding',
+  'በጣም ጥሩ': 'Excellent',
+  'ጥሩ': 'Good',
+  'ከመካከለኛ በላይ': 'Above Average',
+  'መካከለኛ': 'Average',
+  'ከመካከለኛ በታች': 'Below Average',
+  'መሻሻል ያስፈልጋል': 'Needs Improvement'
+};
