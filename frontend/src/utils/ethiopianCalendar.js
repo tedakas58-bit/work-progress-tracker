@@ -80,3 +80,47 @@ export const getEthiopianMonthName = (monthNumber, language = 'amharic') => {
 export const filterFutureReports = (reports) => {
   return reports.filter(report => isMonthVisible(report.month));
 };
+
+
+/**
+ * Format deadline as Ethiopian date
+ * @param {Date|string} gregorianDate - Gregorian date
+ * @param {number} ethiopianMonth - Ethiopian month number
+ * @param {string} language - 'amharic' or 'english'
+ * @returns {string} Formatted Ethiopian date (e.g., "ታህሳስ 18, 2018")
+ */
+export const formatEthiopianDeadline = (gregorianDate, ethiopianMonth, language = 'amharic') => {
+  const date = new Date(gregorianDate);
+  const day = date.getDate();
+  const gregorianYear = date.getFullYear();
+  const gregorianMonth = date.getMonth() + 1;
+  
+  // Calculate Ethiopian year (7-8 years behind Gregorian)
+  let ethiopianYear;
+  if (gregorianMonth >= 9) {
+    ethiopianYear = gregorianYear - 7;
+  } else {
+    ethiopianYear = gregorianYear - 8;
+  }
+  
+  const monthName = getEthiopianMonthName(ethiopianMonth, language);
+  
+  if (language === 'amharic') {
+    return `${monthName} ${day}, ${ethiopianYear}`;
+  } else {
+    return `${monthName} ${day}, ${ethiopianYear}`;
+  }
+};
+
+/**
+ * Get days remaining until deadline
+ * @param {Date|string} deadline - Deadline date
+ * @returns {number} Days remaining (negative if past deadline)
+ */
+export const getDaysUntilDeadline = (deadline) => {
+  const now = new Date();
+  const deadlineDate = new Date(deadline);
+  const diffTime = deadlineDate - now;
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays;
+};

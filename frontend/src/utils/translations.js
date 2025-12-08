@@ -330,3 +330,12 @@ export const summaryTranslations = {
   'ከመካከለኛ በታች': 'Below Average',
   'መሻሻል ያስፈልጋል': 'Needs Improvement'
 };
+
+
+// Deadline and date translations
+export const deadlineTranslations = {
+  'ቀናት ቀርተዋል': 'days left',
+  'ጊዜው አልፏል': 'Deadline passed',
+  'ቀናት': 'days',
+  'Passed': 'Passed'
+};

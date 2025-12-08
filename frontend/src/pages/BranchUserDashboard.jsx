@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { reportAPI } from '../services/api';
 import Navbar from '../components/Navbar';
 import { FileText, Clock, CheckCircle, AlertCircle, TrendingUp, Target, Award } from 'lucide-react';
-import { filterFutureReports, getCurrentEthiopianMonth, getEthiopianMonthName } from '../utils/ethiopianCalendar';
+import { filterFutureReports, getCurrentEthiopianMonth, getEthiopianMonthName, formatEthiopianDeadline, getDaysUntilDeadline } from '../utils/ethiopianCalendar';
 import { useLanguage } from '../contexts/LanguageContext';
 
 function BranchUserDashboard({ user, onLogout }) {
@@ -194,8 +194,15 @@ function BranchUserDashboard({ user, onLogout }) {
                           </span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-sm text-purple-200">
-                        {new Date(report.deadline).toLocaleDateString()}
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-purple-200">
+                          {formatEthiopianDeadline(report.deadline, report.month, language === 'am' ? 'amharic' : 'english')}
+                        </div>
+                        <div className="text-xs text-purple-300 mt-1">
+                          {getDaysUntilDeadline(report.deadline) > 0 
+                            ? `${getDaysUntilDeadline(report.deadline)} ${t('ቀናት', 'days')}`
+                            : t('ጊዜው አልፏል', 'Passed')}
+                        </div>
                       </td>
                       <td className="px-6 py-4">{getStatusBadge(report.status)}</td>
                       <td className="px-6 py-4">

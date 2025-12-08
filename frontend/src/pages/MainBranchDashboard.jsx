@@ -3,7 +3,7 @@ import { monthlyPlanAPI, reportAPI } from '../services/api';
 import Navbar from '../components/Navbar';
 import { Calendar, TrendingUp, Users, Sparkles, Target, Edit, RefreshCw, BarChart3, Download, Award, FileText } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
-import { getEthiopianMonthName } from '../utils/ethiopianCalendar';
+import { getEthiopianMonthName, formatEthiopianDeadline, getDaysUntilDeadline } from '../utils/ethiopianCalendar';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { calculateGrade, getGradeDescription } from '../utils/grading';
 import { exportToPDF, exportToExcel, exportToWord } from '../utils/exportReports';
@@ -233,7 +233,12 @@ function MainBranchDashboard({ user, onLogout }) {
                     {t('የመጨረሻ ቀን', 'Deadline')}
                   </div>
                   <div className="text-xl font-bold text-white">
-                    {new Date(currentPlan.deadline).toLocaleDateString()}
+                    {formatEthiopianDeadline(currentPlan.deadline, currentPlan.month, language === 'am' ? 'amharic' : 'english')}
+                  </div>
+                  <div className="text-xs text-blue-200 mt-1">
+                    {getDaysUntilDeadline(currentPlan.deadline) > 0 
+                      ? `${getDaysUntilDeadline(currentPlan.deadline)} ${t('ቀናት ቀርተዋል', 'days left')}`
+                      : t('ጊዜው አልፏል', 'Deadline passed')}
                   </div>
                 </div>
 
