@@ -236,8 +236,8 @@ function MainBranchDashboard({ user, onLogout }) {
                     {formatEthiopianDeadline(currentPlan.deadline, currentPlan.month, language === 'am' ? 'amharic' : 'english')}
                   </div>
                   <div className="text-xs text-blue-200 mt-1">
-                    {getDaysUntilDeadline(currentPlan.deadline) > 0 
-                      ? `${getDaysUntilDeadline(currentPlan.deadline)} ${t('ቀናት ቀርተዋል', 'days left')}`
+                    {getDaysUntilDeadline(currentPlan.deadline, currentPlan.month) > 0 
+                      ? `${getDaysUntilDeadline(currentPlan.deadline, currentPlan.month)} ${t('ቀናት ቀርተዋል', 'days left')}`
                       : t('ጊዜው አልፏል', 'Deadline passed')}
                   </div>
                 </div>

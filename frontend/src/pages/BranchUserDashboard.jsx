@@ -199,8 +199,8 @@ function BranchUserDashboard({ user, onLogout }) {
                           {formatEthiopianDeadline(report.deadline, report.month, language === 'am' ? 'amharic' : 'english')}
                         </div>
                         <div className="text-xs text-purple-300 mt-1">
-                          {getDaysUntilDeadline(report.deadline) > 0 
-                            ? `${getDaysUntilDeadline(report.deadline)} ${t('ቀናት', 'days')}`
+                          {getDaysUntilDeadline(report.deadline, report.month) > 0 
+                            ? `${getDaysUntilDeadline(report.deadline, report.month)} ${t('ቀናት', 'days')}`
                             : t('ጊዜው አልፏል', 'Passed')}
                         </div>
                       </td>

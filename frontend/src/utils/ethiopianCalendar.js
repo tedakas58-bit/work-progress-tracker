@@ -113,14 +113,69 @@ export const formatEthiopianDeadline = (gregorianDate, ethiopianMonth, language 
 };
 
 /**
- * Get days remaining until deadline
- * @param {Date|string} deadline - Deadline date
- * @returns {number} Days remaining (negative if past deadline)
+ * Get current Ethiopian date
+ * @returns {object} {day, month, year}
  */
-export const getDaysUntilDeadline = (deadline) => {
+export const getCurrentEthiopianDate = () => {
   const now = new Date();
+  const gregorianMonth = now.getMonth() + 1;
+  const gregorianDay = now.getDate();
+  const gregorianYear = now.getFullYear();
+  
+  // Map Gregorian month to Ethiopian month
+  const monthMapping = {
+    7: 1, 8: 2, 9: 3, 10: 4, 11: 5, 12: 6,
+    1: 7, 2: 8, 3: 9, 4: 10, 5: 11, 6: 12
+  };
+  
+  const ethiopianMonth = monthMapping[gregorianMonth] || 1;
+  
+  // Calculate Ethiopian year
+  let ethiopianYear;
+  if (gregorianMonth >= 9) {
+    ethiopianYear = gregorianYear - 7;
+  } else {
+    ethiopianYear = gregorianYear - 8;
+  }
+  
+  // Ethiopian day is approximately the same as Gregorian day
+  // (This is a simplification - exact conversion is more complex)
+  const ethiopianDay = gregorianDay;
+  
+  return { day: ethiopianDay, month: ethiopianMonth, year: ethiopianYear };
+};
+
+/**
+ * Get days remaining until deadline (Ethiopian Calendar calculation)
+ * @param {Date|string} deadline - Deadline date (Gregorian)
+ * @param {number} deadlineEthiopianMonth - Ethiopian month of deadline
+ * @returns {number} Days remaining in Ethiopian calendar
+ */
+export const getDaysUntilDeadline = (deadline, deadlineEthiopianMonth) => {
+  const currentEC = getCurrentEthiopianDate();
   const deadlineDate = new Date(deadline);
-  const diffTime = deadlineDate - now;
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  return diffDays;
+  const deadlineDay = deadlineDate.getDate(); // Should be 18
+  
+  // If same month, simple subtraction
+  if (currentEC.month === deadlineEthiopianMonth) {
+    return deadlineDay - currentEC.day;
+  }
+  
+  // If deadline is next month
+  if (deadlineEthiopianMonth === currentEC.month + 1) {
+    // Days left in current month + days in deadline month
+    const daysLeftInCurrentMonth = 30 - currentEC.day;
+    return daysLeftInCurrentMonth + deadlineDay;
+  }
+  
+  // If deadline is in the past
+  if (deadlineEthiopianMonth < currentEC.month) {
+    return -1; // Deadline passed
+  }
+  
+  // For other cases, calculate month difference
+  const monthDiff = deadlineEthiopianMonth - currentEC.month;
+  const daysLeftInCurrentMonth = 30 - currentEC.day;
+  const fullMonthsDays = (monthDiff - 1) * 30;
+  return daysLeftInCurrentMonth + fullMonthsDays + deadlineDay;
 };
