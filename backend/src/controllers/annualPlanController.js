@@ -22,7 +22,9 @@ export const createAnnualPlan = async (req, res) => {
     const monthlyUnits = 0;
     
     for (let month = 1; month <= 12; month++) {
-      const deadline = new Date(year, month, 0); // Last day of each month
+      // Ethiopian calendar: deadline is 18th of each month
+      // Ethiopian months have 30 days each (except the 13th month)
+      const deadline = new Date(year, month - 1, 18); // 18th day of each month
       
       await client.query(
         `INSERT INTO monthly_periods (annual_plan_id, month, year, target_amount, target_units, deadline)
