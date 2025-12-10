@@ -2,11 +2,14 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { actionAPI } from '../services/api';
 import Navbar from '../components/Navbar';
-import { FileText, Clock, CheckCircle, AlertCircle, Target, TrendingUp } from 'lucide-react';
+import { FileText, Clock, CheckCircle, AlertCircle, Target, TrendingUp, Link as LinkIcon, X } from 'lucide-react';
+import { attachmentsAPI } from '../services/api';
 
 function ActionReports({ user, onLogout }) {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [attaching, setAttaching] = useState(false);
+  const [attachmentModal, setAttachmentModal] = useState({ open: false, report: null, title: '', url: '' });
 
   useEffect(() => {
     fetchReports();
@@ -20,6 +23,28 @@ function ActionReports({ user, onLogout }) {
       console.error('Failed to fetch action reports:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const openAttachmentModal = (report) => {
+    setAttachmentModal({ open: true, report, title: '', url: '' });
+  };
+
+  const submitAttachment = async (e) => {
+    e.preventDefault();
+    if (!attachmentModal.report) return;
+    setAttaching(true);
+    try {
+      await attachmentsAPI.addActionReportAttachment(attachmentModal.report.id, {
+        title: attachmentModal.title || 'Achievement Evidence',
+        url: attachmentModal.url
+      });
+      setAttachmentModal({ open: false, report: null, title: '', url: '' });
+    } catch (error) {
+      console.error('Failed to add attachment:', error);
+      alert('Failed to add attachment');
+    } finally {
+      setAttaching(false);
     }
   };
 
@@ -178,14 +203,22 @@ function ActionReports({ user, onLogout }) {
                         {new Date(report.deadline).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4">{getStatusBadge(report.status)}</td>
-                      <td className="px-6 py-4">
-                        <Link
-                          to={`/submit-action/${report.id}`}
-                          className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-sm font-semibold rounded-lg transition transform hover:scale-105"
-                        >
-                          {report.status === 'pending' ? 'Submit' : 'View/Edit'}
-                        </Link>
-                      </td>
+                    <td className="px-6 py-4">
+                      <Link
+                        to={`/submit-action/${report.id}`}
+                        className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-sm font-semibold rounded-lg transition transform hover:scale-105"
+                      >
+                        {report.status === 'pending' ? 'Submit' : 'View/Edit'}
+                      </Link>
+                      <button
+                        onClick={() => openAttachmentModal(report)}
+                        className="inline-flex items-center gap-2 ml-2 px-3 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold rounded-lg transition border border-white/20"
+                        title="Attach Achievement Link"
+                      >
+                        <LinkIcon size={14} />
+                        Attach Link
+                      </button>
+                    </td>
                     </tr>
                   ))}
                 </tbody>
@@ -194,6 +227,44 @@ function ActionReports({ user, onLogout }) {
           </div>
         )}
       </div>
+      {attachmentModal.open && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl shadow-2xl border border-white/20 max-w-md w-full">
+            <div className="flex items-center justify-between p-4 border-b border-white/10">
+              <div className="flex items-center gap-2 text-white font-semibold">
+                <LinkIcon size={16} />
+                Attach Achievement Link
+              </div>
+              <button onClick={() => setAttachmentModal({ open: false, report: null, title: '', url: '' })} className="p-1 hover:bg-white/10 rounded-lg transition">
+                <X size={16} className="text-purple-200" />
+              </button>
+            </div>
+            <form onSubmit={submitAttachment} className="p-4 space-y-3">
+              <input
+                type="text"
+                value={attachmentModal.title}
+                onChange={(e) => setAttachmentModal({ ...attachmentModal, title: e.target.value })}
+                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition"
+                placeholder="Title (e.g., Photos, Report PDF)"
+              />
+              <input
+                type="url"
+                value={attachmentModal.url}
+                onChange={(e) => setAttachmentModal({ ...attachmentModal, url: e.target.value })}
+                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition"
+                placeholder="https://..."
+                required
+              />
+              <div className="flex gap-2 pt-2">
+                <button type="submit" disabled={attaching || !attachmentModal.url} className="flex-1 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white font-semibold py-3 rounded-lg transition disabled:opacity-50">
+                  {attaching ? 'Attaching...' : 'Attach'}
+                </button>
+                <button type="button" onClick={() => setAttachmentModal({ open: false, report: null, title: '', url: '' })} className="flex-1 bg-white/10 hover:bg-white/20 text-white font-semibold py-3 rounded-lg transition border border-white/20">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
