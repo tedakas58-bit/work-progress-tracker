@@ -5,25 +5,36 @@ import { Document, Packer, Paragraph, Table, TableCell, TableRow, WidthType, Ali
 import { saveAs } from 'file-saver';
 import { calculateGrade } from './grading';
 import { getEthiopianMonthName } from './ethiopianCalendar';
+import { addGeezFontSupport, canRenderAmharic, getDisplayText } from './geezFont';
 
-// Export to PDF (Note: PDF uses English labels due to font limitations)
+// Export to PDF with Geez font support
 export const exportToPDF = (reports, month, year, language = 'en') => {
   try {
     console.log('Exporting to PDF:', { reports, month, year, language });
     const doc = new jsPDF();
     
-    // Note: Using English for PDF due to jsPDF font limitations with Amharic
-    const pdfLang = 'en';
+    // Try to add Geez font support
+    const hasGeezFont = addGeezFontSupport(doc);
+    const useAmharic = language === 'am' && hasGeezFont;
+    
+    // Add note about font support
+    if (language === 'am' && !hasGeezFont) {
+      console.log('Amharic requested but Geez font not available, using English');
+    }
     
     // Title
     doc.setFontSize(18);
-    doc.text('Monthly Progress Report', 14, 20);
+    const title = getDisplayText('የወርሃዊ እድገት ሪፖርት', 'Monthly Progress Report', !useAmharic);
+    doc.text(title, 14, 20);
   
   // Month and Year
   doc.setFontSize(12);
-  const monthName = getEthiopianMonthName(month, 'english'); // Always use English for PDF
-  doc.text(`Month: ${monthName} ${year}`, 14, 30);
-  doc.text(`Date: ${new Date().toLocaleDateString()}`, 14, 37);
+  const monthName = getEthiopianMonthName(month, useAmharic ? 'amharic' : 'english');
+  const monthLabel = getDisplayText('ወር', 'Month', !useAmharic);
+  const dateLabel = getDisplayText('ቀን', 'Date', !useAmharic);
+  
+  doc.text(`${monthLabel}: ${monthName} ${year}`, 14, 30);
+  doc.text(`${dateLabel}: ${new Date().toLocaleDateString()}`, 14, 37);
   
   // Table
   const tableData = reports.map(report => {
@@ -34,21 +45,21 @@ export const exportToPDF = (reports, month, year, language = 'en') => {
       (Number(report.achieved_amount) || 0).toLocaleString(),
       `${(Number(report.progress_percentage) || 0).toFixed(1)}%`,
       gradeInfo.grade,
-      report.status === 'submitted' ? 'Submitted' :
-      report.status === 'late' ? 'Late' :
-      'Pending'
+      report.status === 'submitted' ? getDisplayText('ገብቷል', 'Submitted', !useAmharic) :
+      report.status === 'late' ? getDisplayText('ዘግይቷል', 'Late', !useAmharic) :
+      getDisplayText('በመጠባበቅ ላይ', 'Pending', !useAmharic)
     ];
   });
   
   doc.autoTable({
     startY: 45,
     head: [[
-      'Branch',
-      'Target',
-      'Achieved',
-      'Progress',
-      'Grade',
-      'Status'
+      getDisplayText('ቅርንጫፍ', 'Branch', !useAmharic),
+      getDisplayText('ዒላማ', 'Target', !useAmharic),
+      getDisplayText('የተሳካ', 'Achieved', !useAmharic),
+      getDisplayText('እድገት', 'Progress', !useAmharic),
+      getDisplayText('ደረጃ', 'Grade', !useAmharic),
+      getDisplayText('ሁኔታ', 'Status', !useAmharic)
     ]],
     body: tableData,
     theme: 'grid',
@@ -61,7 +72,8 @@ export const exportToPDF = (reports, month, year, language = 'en') => {
   
   // Chart Title
   doc.setFontSize(16);
-  doc.text('Progress Chart', 14, 20);
+  const chartTitle = getDisplayText('የእድገት ግራፍ', 'Progress Chart', !useAmharic);
+  doc.text(chartTitle, 14, 20);
   
   // Sort reports by progress for better visualization
   const sortedReports = [...reports].sort((a, b) => 
@@ -141,7 +153,8 @@ export const exportToPDF = (reports, month, year, language = 'en') => {
   const pieY = chartStartY + chartHeight + 40;
   doc.setFontSize(14);
   doc.setTextColor(0);
-  doc.text('Grade Distribution', 14, pieY);
+  const pieTitle = getDisplayText('የደረጃ ስርጭት', 'Grade Distribution', !useAmharic);
+  doc.text(pieTitle, 14, pieY);
   
   // Calculate grade distribution
   const gradeDistribution = {};
@@ -239,12 +252,26 @@ export const exportToPDF = (reports, month, year, language = 'en') => {
   
   doc.setFontSize(12);
   doc.setTextColor(0);
-  doc.text('Summary:', 14, summaryY);
+  const summaryTitle = getDisplayText('ማጠቃለያ:', 'Summary:', !useAmharic);
+  doc.text(summaryTitle, 14, summaryY);
   doc.setFontSize(10);
-  doc.text(`Total Target: ${totalTarget.toLocaleString()}`, 14, summaryY + 7);
-  doc.text(`Total Achieved: ${totalAchieved.toLocaleString()}`, 14, summaryY + 14);
-  doc.text(`Average Progress: ${(Number(avgProgress) || 0).toFixed(1)}%`, 14, summaryY + 21);
-  doc.text(`Total Reports: ${reports.length}`, 14, summaryY + 28);
+  
+  const totalTargetLabel = getDisplayText('ጠቅላላ ዒላማ', 'Total Target', !useAmharic);
+  const totalAchievedLabel = getDisplayText('ጠቅላላ የተሳካ', 'Total Achieved', !useAmharic);
+  const avgProgressLabel = getDisplayText('አማካይ እድገት', 'Average Progress', !useAmharic);
+  const totalReportsLabel = getDisplayText('ጠቅላላ ሪፖርቶች', 'Total Reports', !useAmharic);
+  
+  doc.text(`${totalTargetLabel}: ${totalTarget.toLocaleString()}`, 14, summaryY + 7);
+  doc.text(`${totalAchievedLabel}: ${totalAchieved.toLocaleString()}`, 14, summaryY + 14);
+  doc.text(`${avgProgressLabel}: ${(Number(avgProgress) || 0).toFixed(1)}%`, 14, summaryY + 21);
+  doc.text(`${totalReportsLabel}: ${reports.length}`, 14, summaryY + 28);
+  
+  // Add font notice if using English fallback
+  if (language === 'am' && !useAmharic) {
+    doc.setFontSize(8);
+    doc.setTextColor(100);
+    doc.text('Note: Amharic font not available, displaying in English', 14, summaryY + 40);
+  }
   
   // Save
     doc.save(`monthly-report-${monthName}-${year}.pdf`);
