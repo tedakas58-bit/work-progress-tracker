@@ -4,10 +4,12 @@ import { reportAPI } from '../services/api';
 import Navbar from '../components/Navbar';
 import { ArrowLeft, Award, TrendingUp, TrendingDown } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { useLanguage } from '../contexts/LanguageContext';
 
 function BranchComparison({ user, onLogout }) {
   const navigate = useNavigate();
   const { planId } = useParams();
+  const { t } = useLanguage();
   const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -30,7 +32,7 @@ function BranchComparison({ user, onLogout }) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navbar user={user} onLogout={onLogout} />
-        <div className="container mx-auto px-4 py-8 text-center">Loading...</div>
+        <div className="container mx-auto px-4 py-8 text-center">{t('በመጫን ላይ...', 'Loading...')}</div>
       </div>
     );
   }
@@ -55,12 +57,12 @@ function BranchComparison({ user, onLogout }) {
           className="flex items-center space-x-2 text-gray-600 hover:text-gray-800 mb-6"
         >
           <ArrowLeft size={20} />
-          <span>Back to Dashboard</span>
+          <span>{t('ወደ ዳሽቦርድ ተመለስ', 'Back to Dashboard')}</span>
         </button>
 
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">Branch Performance Comparison</h1>
-          <p className="text-gray-600 mt-1">Compare progress across all branches</p>
+          <h1 className="text-3xl font-bold text-gray-800">{t('የቅርንጫፍ አፈጻጸም ንጽጽር', 'Branch Performance Comparison')}</h1>
+          <p className="text-gray-600 mt-1">{t('በሁሉም ቅርንጫፎች መካከል እድገትን ያወዳድሩ', 'Compare progress across all branches')}</p>
         </div>
 
         {topPerformer && (
@@ -68,10 +70,10 @@ function BranchComparison({ user, onLogout }) {
             <div className="flex items-center space-x-4">
               <Award size={48} />
               <div>
-                <h2 className="text-2xl font-bold">Top Performer</h2>
+                <h2 className="text-2xl font-bold">{t('ከፍተኛ አፈጻጸም ያለው', 'Top Performer')}</h2>
                 <p className="text-xl">{topPerformer.branch_name}</p>
                 <p className="text-lg opacity-90">
-                  {parseFloat(topPerformer.avg_progress || 0).toFixed(1)}% Average Progress
+                  {parseFloat(topPerformer.avg_progress || 0).toFixed(1)}% {t('አማካይ እድገት', 'Average Progress')}
                 </p>
               </div>
             </div>
@@ -79,7 +81,7 @@ function BranchComparison({ user, onLogout }) {
         )}
 
         <div className="bg-white rounded-lg shadow p-6 mb-8">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Progress Comparison</h2>
+          <h2 className="text-xl font-bold text-gray-800 mb-4">{t('የእድገት ንጽጽር', 'Progress Comparison')}</h2>
           <ResponsiveContainer width="100%" height={400}>
             <BarChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -88,29 +90,29 @@ function BranchComparison({ user, onLogout }) {
               <YAxis yAxisId="right" orientation="right" stroke="#10b981" />
               <Tooltip />
               <Legend />
-              <Bar yAxisId="left" dataKey="achieved" fill="#3b82f6" name="Total Achieved ($)" />
-              <Bar yAxisId="right" dataKey="progress" fill="#10b981" name="Avg Progress (%)" />
+              <Bar yAxisId="left" dataKey="achieved" fill="#3b82f6" name={t('ጠቅላላ የተሳካ', 'Total Achieved')} />
+              <Bar yAxisId="right" dataKey="progress" fill="#10b981" name={t('አማካይ እድገት (%)', 'Avg Progress (%)')} />
             </BarChart>
           </ResponsiveContainer>
         </div>
 
         <div className="bg-white rounded-lg shadow overflow-hidden">
           <div className="px-6 py-4 border-b">
-            <h2 className="text-xl font-bold text-gray-800">Detailed Branch Statistics</h2>
+            <h2 className="text-xl font-bold text-gray-800">{t('ዝርዝር የቅርንጫፍ ስታቲስቲክስ', 'Detailed Branch Statistics')}</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rank</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Branch</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Reports</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">On Time</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Late</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pending</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Achieved</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Avg Progress</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trend</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('ደረጃ', 'Rank')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('ቅርንጫፍ', 'Branch')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('ጠቅላላ ሪፖርቶች', 'Total Reports')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('በጊዜው', 'On Time')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('ዘግይቷል', 'Late')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('በመጠባበቅ ላይ', 'Pending')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('ጠቅላላ የተሳካ', 'Total Achieved')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('አማካይ እድገት', 'Avg Progress')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('አዝማሚያ', 'Trend')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -146,7 +148,7 @@ function BranchComparison({ user, onLogout }) {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-sm font-semibold text-gray-900">
-                        ${parseFloat(branch.total_achieved || 0).toLocaleString()}
+                        {parseFloat(branch.total_achieved || 0).toLocaleString()}
                       </td>
                       <td className="px-6 py-4 text-sm">
                         <div className="flex items-center space-x-2">

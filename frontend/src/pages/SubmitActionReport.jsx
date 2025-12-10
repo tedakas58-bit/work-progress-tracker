@@ -3,10 +3,13 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { actionAPI } from '../services/api';
 import Navbar from '../components/Navbar';
 import { ArrowLeft, Save, Target, TrendingUp } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
+import { getEthiopianMonthName } from '../utils/ethiopianCalendar';
 
 function SubmitActionReport({ user, onLogout }) {
   const navigate = useNavigate();
   const { reportId } = useParams();
+  const { t, language } = useLanguage();
   const [report, setReport] = useState(null);
   const [formData, setFormData] = useState({
     actualActivity: '',
@@ -34,7 +37,7 @@ function SubmitActionReport({ user, onLogout }) {
       }
     } catch (error) {
       console.error('Failed to fetch report:', error);
-      setError('Failed to load report');
+      setError(t('ሪፖርት መጫን አልተሳካም', 'Failed to load report'));
     } finally {
       setLoading(false);
     }
@@ -70,7 +73,7 @@ function SubmitActionReport({ user, onLogout }) {
         <Navbar user={user} onLogout={onLogout} />
         <div className="container mx-auto px-6 py-8 text-center">
           <div className="inline-block w-16 h-16 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin"></div>
-          <p className="text-purple-200 mt-4">Loading...</p>
+          <p className="text-purple-200 mt-4">{t('በመጫን ላይ...', 'Loading...')}</p>
         </div>
       </div>
     );
@@ -81,7 +84,7 @@ function SubmitActionReport({ user, onLogout }) {
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
         <Navbar user={user} onLogout={onLogout} />
         <div className="container mx-auto px-6 py-8 text-center">
-          <p className="text-white">Report not found</p>
+          <p className="text-white">{t('ሪፖርት አልተገኘም', 'Report not found')}</p>
         </div>
       </div>
     );
@@ -100,7 +103,7 @@ function SubmitActionReport({ user, onLogout }) {
           className="flex items-center space-x-2 text-purple-300 hover:text-white mb-6 transition group"
         >
           <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-          <span>Back to Action Reports</span>
+          <span>{t('ወደ የተግባር ሪፖርቶች ተመለስ', 'Back to Action Reports')}</span>
         </button>
 
         <div className="max-w-3xl mx-auto glass rounded-3xl shadow-2xl p-8 backdrop-blur-xl border border-white/20 animate-slide-in">
@@ -110,8 +113,8 @@ function SubmitActionReport({ user, onLogout }) {
                 <Target size={24} className="text-white" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-white">Action Report</h1>
-                <p className="text-purple-200">Action {report.action_number}</p>
+                <h1 className="text-3xl font-bold text-white">{t('የተግባር ሪፖርት', 'Action Report')}</h1>
+                <p className="text-purple-200">{t('ተግባር', 'Action')} {report.action_number}</p>
               </div>
             </div>
             
@@ -120,36 +123,36 @@ function SubmitActionReport({ user, onLogout }) {
             </div>
             
             <p className="text-lg font-semibold text-blue-300">
-              {new Date(report.year, report.month - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+              {getEthiopianMonthName(report.month, language === 'am' ? 'amharic' : 'english')} {report.year}
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/20 backdrop-blur-sm rounded-xl p-4 border border-blue-400/30">
-              <div className="text-sm text-blue-300 mb-1">Plan Number</div>
+              <div className="text-sm text-blue-300 mb-1">{t('የእቅድ ቁጥር', 'Plan Number')}</div>
               <div className="text-2xl font-bold text-white">
                 {report.plan_number?.toLocaleString()}
               </div>
             </div>
             
             <div className="bg-gradient-to-br from-green-500/20 to-green-600/20 backdrop-blur-sm rounded-xl p-4 border border-green-400/30">
-              <div className="text-sm text-green-300 mb-1">Plan Activity (Target)</div>
+              <div className="text-sm text-green-300 mb-1">{t('የእቅድ እንቅስቃሴ (ዒላማ)', 'Plan Activity (Target)')}</div>
               <div className="text-2xl font-bold text-white">
                 {report.plan_activity?.toLocaleString()}
               </div>
             </div>
             
             <div className="bg-gradient-to-br from-purple-500/20 to-purple-600/20 backdrop-blur-sm rounded-xl p-4 border border-purple-400/30">
-              <div className="text-sm text-purple-300 mb-1">Deadline</div>
+              <div className="text-sm text-purple-300 mb-1">{t('የመጨረሻ ቀን', 'Deadline')}</div>
               <div className="text-lg font-bold text-white">
                 {new Date(report.deadline).toLocaleDateString()}
               </div>
             </div>
             
             <div className={`backdrop-blur-sm rounded-xl p-4 border ${isOverdue ? 'bg-gradient-to-br from-red-500/20 to-red-600/20 border-red-400/30' : 'bg-gradient-to-br from-cyan-500/20 to-cyan-600/20 border-cyan-400/30'}`}>
-              <div className={`text-sm mb-1 ${isOverdue ? 'text-red-300' : 'text-cyan-300'}`}>Status</div>
+              <div className={`text-sm mb-1 ${isOverdue ? 'text-red-300' : 'text-cyan-300'}`}>{t('ሁኔታ', 'Status')}</div>
               <div className={`text-lg font-bold ${isOverdue ? 'text-red-200' : 'text-white'}`}>
-                {isOverdue ? 'Overdue' : 'On Time'}
+                {isOverdue ? t('ዘግይቷል', 'Overdue') : t('በጊዜው', 'On Time')}
               </div>
             </div>
           </div>
@@ -163,14 +166,14 @@ function SubmitActionReport({ user, onLogout }) {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-purple-200 mb-2">
-                Actual Activity Completed *
+                {t('የተጠናቀቀ ትክክለኛ እንቅስቃሴ *', 'Actual Activity Completed *')}
               </label>
               <input
                 type="number"
                 value={formData.actualActivity}
                 onChange={(e) => setFormData({ ...formData, actualActivity: e.target.value })}
                 className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition backdrop-blur-sm"
-                placeholder="Enter actual activity completed"
+                placeholder={t('የተጠናቀቀውን ትክክለኛ እንቅስቃሴ ያስገቡ', 'Enter actual activity completed')}
                 required
               />
             </div>
@@ -180,7 +183,7 @@ function SubmitActionReport({ user, onLogout }) {
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="font-semibold text-cyan-200 flex items-center gap-2">
                     <TrendingUp size={20} />
-                    Implementation Percentage
+                    {t('የትግበራ መቶኛ', 'Implementation Percentage')}
                   </h3>
                   <span className="text-3xl font-bold text-white">{percentage}%</span>
                 </div>
@@ -191,28 +194,28 @@ function SubmitActionReport({ user, onLogout }) {
                   />
                 </div>
                 <p className="text-xs text-cyan-100 mt-2">
-                  Calculation: ({formData.actualActivity} / {report.plan_activity}) × 100 = {percentage}%
+                  {t('ስሌት', 'Calculation')}: ({formData.actualActivity} / {report.plan_activity}) × 100 = {percentage}%
                 </p>
               </div>
             )}
 
             <div>
               <label className="block text-sm font-medium text-purple-200 mb-2">
-                Notes / Comments
+                {t('ማስታወሻዎች', 'Notes / Comments')}
               </label>
               <textarea
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                 className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition backdrop-blur-sm resize-none"
                 rows="4"
-                placeholder="Add any notes about this action's implementation..."
+                placeholder={t('ስለዚህ ተግባር ትግበራ ማስታወሻ ያክሉ...', "Add any notes about this action's implementation...")}
               />
             </div>
 
             {report.submitted_at && (
               <div className="bg-blue-500/20 border border-blue-400/30 rounded-xl p-4 backdrop-blur-sm">
                 <p className="text-sm text-blue-200">
-                  Previously submitted on {new Date(report.submitted_at).toLocaleString()}
+                  {t('ቀደም ብሎ ገብቷል በ', 'Previously submitted on')} {new Date(report.submitted_at).toLocaleString()}
                 </p>
               </div>
             )}
@@ -224,7 +227,7 @@ function SubmitActionReport({ user, onLogout }) {
                 className="flex-1 flex items-center justify-center space-x-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold py-3 rounded-xl transition transform hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 shadow-lg"
               >
                 <Save size={20} />
-                <span>{submitting ? 'Submitting...' : 'Submit Report'}</span>
+                <span>{submitting ? t('በማስገባት ላይ...', 'Submitting...') : t('ሪፖርት አስገባ', 'Submit Report')}</span>
               </button>
               
               <button
@@ -232,7 +235,7 @@ function SubmitActionReport({ user, onLogout }) {
                 onClick={() => navigate('/action-reports')}
                 className="px-8 py-3 bg-white/10 border border-white/20 rounded-xl hover:bg-white/20 transition text-white font-semibold"
               >
-                Cancel
+                {t('ሰርዝ', 'Cancel')}
               </button>
             </div>
           </form>

@@ -3,10 +3,12 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { actionAPI } from '../services/api';
 import Navbar from '../components/Navbar';
 import { ArrowLeft, Plus, Trash2, Target } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 function CreateActions({ user, onLogout }) {
   const navigate = useNavigate();
   const { planId } = useParams();
+  const { t } = useLanguage();
   const [actions, setActions] = useState([
     { actionNumber: 1, actionTitle: '', planNumber: '', planActivity: '', attachments: [] }
   ]);
@@ -89,7 +91,7 @@ function CreateActions({ user, onLogout }) {
           className="flex items-center space-x-2 text-purple-300 hover:text-white mb-6 transition group"
         >
           <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-          <span>Back to Plan</span>
+          <span>{t('ወደ እቅድ ተመለስ', 'Back to Plan')}</span>
         </button>
 
         <div className="max-w-5xl mx-auto glass rounded-3xl shadow-2xl p-8 backdrop-blur-xl border border-white/20 animate-slide-in">
@@ -98,10 +100,10 @@ function CreateActions({ user, onLogout }) {
               <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg">
                 <Target size={24} className="text-white" />
               </div>
-              Create Actions
+              {t('ተግባራት ፍጠር', 'Create Actions')}
             </h1>
             <p className="text-purple-200">
-              Define actions with plan numbers and target activities. Branches will report actual activities completed.
+              {t('ተግባራትን በእቅድ ቁጥሮች እና ዒላማ እንቅስቃሴዎች ይግለጹ። ቅርንጫፎች የተጠናቀቁ ትክክለኛ እንቅስቃሴዎችን ሪፖርት ያደርጋሉ።', 'Define actions with plan numbers and target activities. Branches will report actual activities completed.')}
             </p>
           </div>
 
@@ -119,7 +121,7 @@ function CreateActions({ user, onLogout }) {
                     <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center text-sm">
                       {action.actionNumber}
                     </div>
-                    Action {action.actionNumber}
+                    {t('ተግባር', 'Action')} {action.actionNumber}
                   </h3>
                   {actions.length > 1 && (
                     <button
@@ -134,7 +136,7 @@ function CreateActions({ user, onLogout }) {
 
                 <div>
                   <label className="block text-sm font-medium text-purple-200 mb-2">
-                    Attach Links (optional)
+                    {t('አገናኞች ያክሉ (አማራጭ)', 'Attach Links (optional)')}
                   </label>
                   {(action.attachments || []).map((att, aIdx) => (
                     <div key={aIdx} className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
@@ -143,7 +145,7 @@ function CreateActions({ user, onLogout }) {
                         value={att.title}
                         onChange={(e) => updateAttachment(index, aIdx, 'title', e.target.value)}
                         className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition backdrop-blur-sm"
-                        placeholder="Title (e.g., Plan Document)"
+                        placeholder={t('ርዕስ (ለምሳሌ፣ የእቅድ ሰነድ)', 'Title (e.g., Plan Document)')}
                       />
                       <input
                         type="url"
@@ -157,7 +159,7 @@ function CreateActions({ user, onLogout }) {
                         onClick={() => removeAttachment(index, aIdx)}
                         className="px-4 py-3 bg-white/10 border border-white/20 rounded-xl hover:bg-white/20 transition text-white font-semibold"
                       >
-                        Remove
+                        {t('አስወግድ', 'Remove')}
                       </button>
                     </div>
                   ))}
@@ -167,49 +169,49 @@ function CreateActions({ user, onLogout }) {
                     className="inline-flex items-center space-x-2 bg-white/10 border border-white/20 hover:bg-white/20 text-white px-4 py-2 rounded-xl transition"
                   >
                     <Plus size={16} />
-                    <span>Add Link</span>
+                    <span>{t('አገናኝ ያክሉ', 'Add Link')}</span>
                   </button>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-purple-200 mb-2">
-                    Action Title *
+                    {t('የተግባር ርዕስ *', 'Action Title *')}
                   </label>
                   <textarea
                     value={action.actionTitle}
                     onChange={(e) => updateAction(index, 'actionTitle', e.target.value)}
                     className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition backdrop-blur-sm resize-none"
                     rows="2"
-                    placeholder="e.g., Involve community groups in consultation forums..."
+                    placeholder={t('ለምሳሌ፣ የማህበረ ሰብ ቡድኖችን በምክክር መድረኮች ላይ ማሳተፍ...', 'e.g., Involve community groups in consultation forums...')}
                     required
                   />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-purple-200 mb-2">
-                      Plan Number *
-                    </label>
+                  <label className="block text-sm font-medium text-purple-200 mb-2">
+                      {t('የእቅድ ቁጥር *', 'Plan Number *')}
+                  </label>
                     <input
                       type="number"
                       value={action.planNumber}
                       onChange={(e) => updateAction(index, 'planNumber', e.target.value)}
                       className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition backdrop-blur-sm"
-                      placeholder="e.g., 120000"
+                      placeholder={t('ለምሳሌ፣ 120000', 'e.g., 120000')}
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-purple-200 mb-2">
-                      Plan Activity (Target) *
-                    </label>
+                  <label className="block text-sm font-medium text-purple-200 mb-2">
+                      {t('የእቅድ እንቅስቃሴ (ዒላማ) *', 'Plan Activity (Target) *')}
+                  </label>
                     <input
                       type="number"
                       value={action.planActivity}
                       onChange={(e) => updateAction(index, 'planActivity', e.target.value)}
                       className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition backdrop-blur-sm"
-                      placeholder="e.g., 1317376"
+                      placeholder={t('ለምሳሌ፣ 1317376', 'e.g., 1317376')}
                       required
                     />
                   </div>
@@ -223,7 +225,7 @@ function CreateActions({ user, onLogout }) {
               className="w-full flex items-center justify-center space-x-2 bg-white/10 border border-white/20 hover:bg-white/20 text-white px-6 py-3 rounded-xl transition"
             >
               <Plus size={20} />
-              <span>Add Another Action</span>
+              <span>{t('ሌላ ተግባር ያክሉ', 'Add Another Action')}</span>
             </button>
 
             <div className="bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-400/30 rounded-xl p-5 backdrop-blur-sm">
@@ -231,24 +233,24 @@ function CreateActions({ user, onLogout }) {
                 <div className="w-6 h-6 bg-blue-500 rounded-lg flex items-center justify-center">
                   <span className="text-white text-xs">ℹ</span>
                 </div>
-                How it works
+                {t('እንዴት ይሰራል', 'How it works')}
               </h3>
               <ul className="text-sm text-blue-100 space-y-2">
                 <li className="flex items-center gap-2">
                   <div className="w-1.5 h-1.5 bg-blue-400 rounded-full"></div>
-                  Branches will see these actions in their monthly reports
+                  {t('ቅርንጫፎች እነዚህን ተግባራት በወርሃዊ ሪፖርቶቻቸው ውስጥ ያያሉ', 'Branches will see these actions in their monthly reports')}
                 </li>
                 <li className="flex items-center gap-2">
                   <div className="w-1.5 h-1.5 bg-purple-400 rounded-full"></div>
-                  They input actual activities completed
+                  {t('የተጠናቀቁ ትክክለኛ እንቅስቃሴዎችን ያስገባሉ', 'They input actual activities completed')}
                 </li>
                 <li className="flex items-center gap-2">
                   <div className="w-1.5 h-1.5 bg-pink-400 rounded-full"></div>
-                  System automatically calculates: (Actual / Plan) × 100%
+                  {t('ስርዓቱ በራስ-ሰር ያሰላል: (ትክክለኛ / እቅድ) × 100%', 'System automatically calculates: (Actual / Plan) × 100%')}
                 </li>
                 <li className="flex items-center gap-2">
                   <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full"></div>
-                  You can view all submissions and track progress
+                  {t('ሁሉንም ማስገባቶች ማየት እና እድገትን መከታተል ይችላሉ', 'You can view all submissions and track progress')}
                 </li>
               </ul>
             </div>
@@ -262,10 +264,10 @@ function CreateActions({ user, onLogout }) {
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">
                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                    Creating...
+                    {t('በመፍጠር ላይ...', 'Creating...')}
                   </span>
                 ) : (
-                  'Create Actions'
+                  t('ተግባራት ፍጠር', 'Create Actions')
                 )}
               </button>
               
@@ -274,7 +276,7 @@ function CreateActions({ user, onLogout }) {
                 onClick={() => navigate(`/plan/${planId}`)}
                 className="px-8 py-3 bg-white/10 border border-white/20 rounded-xl hover:bg-white/20 transition text-white font-semibold"
               >
-                Cancel
+                {t('ሰርዝ', 'Cancel')}
               </button>
             </div>
           </form>
