@@ -19,6 +19,9 @@ export const LanguageProvider = ({ children }) => {
   // Save language preference to localStorage
   useEffect(() => {
     localStorage.setItem('language', language);
+    if (typeof document !== 'undefined') {
+      document.documentElement.setAttribute('data-lang', language);
+    }
   }, [language]);
 
   const toggleLanguage = () => {
