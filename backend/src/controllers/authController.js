@@ -6,19 +6,26 @@ export const login = async (req, res) => {
   try {
     const { username, password } = req.body;
     
+    console.log('🔍 Login attempt:', { username, passwordLength: password?.length });
+    
     const result = await pool.query(
       'SELECT * FROM users WHERE username = $1',
       [username]
     );
     
     if (result.rows.length === 0) {
+      console.log('❌ User not found:', username);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
     
     const user = result.rows[0];
+    console.log('✅ User found:', { id: user.id, username: user.username, role: user.role });
+    
     const isValidPassword = await bcrypt.compare(password, user.password);
+    console.log('🔐 Password check:', { isValid: isValidPassword, providedPassword: password, storedHashLength: user.password?.length });
     
     if (!isValidPassword) {
+      console.log('❌ Invalid password for user:', username);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
     
