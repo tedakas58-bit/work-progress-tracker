@@ -22,12 +22,15 @@ function App() {
     const userData = localStorage.getItem('user');
     
     if (token && userData) {
-      setUser(JSON.parse(userData));
+      const parsedUser = JSON.parse(userData);
+      console.log('🔍 Loading user from localStorage:', parsedUser);
+      setUser(parsedUser);
     }
     setLoading(false);
   }, []);
 
   const handleLogin = (userData, token) => {
+    console.log('🔍 Login successful, user data:', userData);
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
@@ -59,8 +62,8 @@ function App() {
               (() => {
                 console.log('🔍 User role check:', { user, role: user.role, roleType: typeof user.role });
                 if (user.role === 'admin') {
-                  console.log('✅ Showing AdminDashboard');
-                  return <AdminDashboard user={user} onLogout={handleLogout} />;
+                  console.log('✅ Admin detected - redirecting to /admin');
+                  return <Navigate to="/admin" replace />;
                 } else if (user.role === 'main_branch') {
                   console.log('✅ Showing MainBranchDashboard');
                   return <MainBranchDashboard user={user} onLogout={handleLogout} />;
