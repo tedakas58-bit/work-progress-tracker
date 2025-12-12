@@ -5,6 +5,7 @@ import Login from './pages/Login';
 import MainBranchDashboard from './pages/MainBranchDashboard';
 import BranchUserDashboard from './pages/BranchUserDashboard';
 import AdminDashboard from './pages/AdminDashboard';
+import TestAdmin from './pages/TestAdmin';
 import CreateAnnualPlan from './pages/CreateAnnualPlan';
 import ViewAnnualPlan from './pages/ViewAnnualPlan';
 import SubmitReport from './pages/SubmitReport';
@@ -61,9 +62,11 @@ function App() {
             user ? (
               (() => {
                 console.log('🔍 User role check:', { user, role: user.role, roleType: typeof user.role });
+                alert(`Debug: User role is "${user.role}" (type: ${typeof user.role})`);
                 if (user.role === 'admin') {
                   console.log('✅ Admin detected - redirecting to /admin');
-                  return <Navigate to="/admin" replace />;
+                  alert('Admin detected! Redirecting to admin dashboard...');
+                  return <Navigate to="/test-admin" replace />;
                 } else if (user.role === 'main_branch') {
                   console.log('✅ Showing MainBranchDashboard');
                   return <MainBranchDashboard user={user} onLogout={handleLogout} />;
@@ -81,6 +84,11 @@ function App() {
         <Route 
           path="/admin" 
           element={user?.role === 'admin' ? <AdminDashboard user={user} onLogout={handleLogout} /> : <Navigate to="/" />} 
+        />
+        
+        <Route 
+          path="/test-admin" 
+          element={user?.role === 'admin' ? <TestAdmin user={user} onLogout={handleLogout} /> : <Navigate to="/" />} 
         />
         
         <Route 
