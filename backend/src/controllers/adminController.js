@@ -234,7 +234,9 @@ export const resetBranchPassword = async (req, res) => {
 export const getAllUsers = async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT id, username, role, branch_name, email, created_at
+      `SELECT id, username, role, branch_name, email, created_at,
+              (SELECT COUNT(*) FROM monthly_reports WHERE branch_user_id = users.id) as total_reports,
+              (SELECT COUNT(*) FROM action_reports WHERE branch_user_id = users.id) as total_action_reports
        FROM users 
        ORDER BY role, branch_name`
     );
@@ -243,5 +245,254 @@ export const getAllUsers = async (req, res) => {
   } catch (error) {
     console.error('Get all users error:', error);
     res.status(500).json({ error: 'Failed to get users' });
+  }
+};
+
+// Create any type of user (admin, main_branch, branch_user)
+export const createUser = async (req, res) => {
+  const client = await pool.connect();
+  
+  try {
+    await client.query('BEGIN');
+    
+    const { username, password, role, branchName, email } = req.body;
+    
+    // Validate role
+    if (!['admin', 'main_branch', 'branch_user'].includes(role)) {
+      return res.status(400).json({ error: 'Invalid role specified' });
+    }
+    
+    // Check if username or email already exists
+    const existingUser = await client.query(
+      'SELECT id FROM users WHERE username = $1 OR email = $2',
+      [username, email]
+    );
+    
+    if (existingUser.rows.length > 0) {
+      return res.status(400).json({ error: 'Username or email already exists' });
+    }
+    
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    // Create user
+    const result = await client.query(
+      `INSERT INTO users (username, password, role, branch_name, email)
+       VALUES ($1, $2, $3, $4, $5) RETURNING id, username, role, branch_name, email, created_at`,
+      [username, hashedPassword, role, branchName || null, email]
+    );
+    
+    const newUser = result.rows[0];
+    
+    // If creating a branch user, set up their reports
+    if (role === 'branch_user') {
+      // Create action reports for existing actions
+      const actions = await client.query('SELECT id FROM actions');
+      const monthlyPeriods = await client.query('SELECT id FROM monthly_periods');
+      
+      for (const action of actions.rows) {
+        for (const period of monthlyPeriods.rows) {
+          await client.query(
+            `INSERT INTO action_reports (action_id, monthly_period_id, branch_user_id)
+             VALUES ($1, $2, $3)`,
+            [action.id, period.id, newUser.id]
+          );
+        }
+      }
+      
+      // Create monthly reports for existing monthly periods
+      for (const period of monthlyPeriods.rows) {
+        await client.query(
+          `INSERT INTO monthly_reports (monthly_period_id, branch_user_id)
+           VALUES ($1, $2)`,
+          [period.id, newUser.id]
+        );
+      }
+    }
+    
+    await client.query('COMMIT');
+    
+    res.status(201).json({
+      message: 'User created successfully',
+      user: newUser
+    });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Create user error:', error);
+    res.status(500).json({ error: 'Failed to create user' });
+  } finally {
+    client.release();
+  }
+};
+
+// Update any user
+export const updateUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { username, role, branchName, email, password } = req.body;
+    
+    // Validate role if provided
+    if (role && !['admin', 'main_branch', 'branch_user'].includes(role)) {
+      return res.status(400).json({ error: 'Invalid role specified' });
+    }
+    
+    let query = `UPDATE users SET username = $1, role = $2, branch_name = $3, email = $4, updated_at = NOW()`;
+    let params = [username, role, branchName || null, email];
+    
+    // If password is provided, hash and update it
+    if (password) {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      query += `, password = $5`;
+      params.push(hashedPassword);
+    }
+    
+    query += ` WHERE id = $${params.length + 1} RETURNING id, username, role, branch_name, email`;
+    params.push(id);
+    
+    const result = await pool.query(query, params);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    res.json({
+      message: 'User updated successfully',
+      user: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Update user error:', error);
+    res.status(500).json({ error: 'Failed to update user' });
+  }
+};
+
+// Delete any user
+export const deleteUser = async (req, res) => {
+  const client = await pool.connect();
+  
+  try {
+    await client.query('BEGIN');
+    
+    const { id } = req.params;
+    
+    // Check if user exists
+    const userResult = await client.query(
+      'SELECT id, username, role, branch_name FROM users WHERE id = $1',
+      [id]
+    );
+    
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    const user = userResult.rows[0];
+    
+    // Prevent deleting the last admin
+    if (user.role === 'admin') {
+      const adminCount = await client.query('SELECT COUNT(*) FROM users WHERE role = $1', ['admin']);
+      if (parseInt(adminCount.rows[0].count) <= 1) {
+        return res.status(400).json({ error: 'Cannot delete the last admin user' });
+      }
+    }
+    
+    // Delete related records (cascade should handle this, but being explicit)
+    await client.query('DELETE FROM monthly_reports WHERE branch_user_id = $1', [id]);
+    await client.query('DELETE FROM action_reports WHERE branch_user_id = $1', [id]);
+    
+    // Delete the user
+    await client.query('DELETE FROM users WHERE id = $1', [id]);
+    
+    await client.query('COMMIT');
+    
+    res.json({
+      message: 'User deleted successfully',
+      deletedUser: user
+    });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Delete user error:', error);
+    res.status(500).json({ error: 'Failed to delete user' });
+  } finally {
+    client.release();
+  }
+};
+
+// Reset any user's password
+export const resetUserPassword = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { newPassword } = req.body;
+    
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    
+    const result = await pool.query(
+      `UPDATE users SET password = $1, updated_at = NOW() 
+       WHERE id = $2 
+       RETURNING id, username, role, branch_name`,
+      [hashedPassword, id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    res.json({
+      message: 'Password reset successfully',
+      user: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({ error: 'Failed to reset password' });
+  }
+};
+
+// Get system overview statistics
+export const getSystemStats = async (req, res) => {
+  try {
+    const stats = await pool.query(`
+      SELECT 
+        (SELECT COUNT(*) FROM users WHERE role = 'admin') as total_admins,
+        (SELECT COUNT(*) FROM users WHERE role = 'main_branch') as total_main_branches,
+        (SELECT COUNT(*) FROM users WHERE role = 'branch_user') as total_branch_users,
+        (SELECT COUNT(*) FROM users) as total_users,
+        (SELECT COUNT(*) FROM annual_plans) as total_annual_plans,
+        (SELECT COUNT(*) FROM monthly_reports WHERE status = 'submitted') as total_reports_submitted,
+        (SELECT COUNT(*) FROM action_reports WHERE status = 'submitted') as total_action_reports_submitted,
+        (SELECT COUNT(*) FROM monthly_reports WHERE status = 'late') as total_late_reports
+    `);
+    
+    const recentActivity = await pool.query(`
+      SELECT 
+        'report' as type,
+        u.username,
+        u.branch_name,
+        mr.submitted_at as activity_date,
+        'Monthly Report Submitted' as description
+      FROM monthly_reports mr
+      JOIN users u ON mr.branch_user_id = u.id
+      WHERE mr.submitted_at IS NOT NULL
+      
+      UNION ALL
+      
+      SELECT 
+        'action_report' as type,
+        u.username,
+        u.branch_name,
+        ar.submitted_at as activity_date,
+        'Action Report Submitted' as description
+      FROM action_reports ar
+      JOIN users u ON ar.branch_user_id = u.id
+      WHERE ar.submitted_at IS NOT NULL
+      
+      ORDER BY activity_date DESC
+      LIMIT 10
+    `);
+    
+    res.json({
+      overview: stats.rows[0],
+      recentActivity: recentActivity.rows
+    });
+  } catch (error) {
+    console.error('Get system stats error:', error);
+    res.status(500).json({ error: 'Failed to get system statistics' });
   }
 };

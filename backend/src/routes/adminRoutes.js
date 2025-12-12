@@ -7,7 +7,12 @@ import {
   deleteBranch,
   getBranchStats,
   resetBranchPassword,
-  getAllUsers
+  getAllUsers,
+  createUser,
+  updateUser,
+  deleteUser,
+  resetUserPassword,
+  getSystemStats
 } from '../controllers/adminController.js';
 
 const router = express.Router();
@@ -16,15 +21,22 @@ const router = express.Router();
 router.use(authenticateToken);
 router.use(requireRole('admin'));
 
-// Branch management routes
+// Branch management routes (legacy - kept for compatibility)
 router.get('/branches', getAllBranches);
 router.post('/branches', createBranch);
 router.put('/branches/:id', updateBranch);
 router.delete('/branches/:id', deleteBranch);
 router.post('/branches/:id/reset-password', resetBranchPassword);
 
+// User management routes (enhanced)
+router.get('/users', getAllUsers);
+router.post('/users', createUser);
+router.put('/users/:id', updateUser);
+router.delete('/users/:id', deleteUser);
+router.post('/users/:id/reset-password', resetUserPassword);
+
 // Statistics and overview
 router.get('/stats', getBranchStats);
-router.get('/users', getAllUsers);
+router.get('/system-stats', getSystemStats);
 
 export default router;

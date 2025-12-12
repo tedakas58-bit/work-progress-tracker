@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     username VARCHAR(100) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
-    role VARCHAR(20) NOT NULL CHECK (role IN ('main_branch', 'branch_user')),
+    role VARCHAR(20) NOT NULL CHECK (role IN ('admin', 'main_branch', 'branch_user')),
     branch_name VARCHAR(100),
     email VARCHAR(255) UNIQUE NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

@@ -4,6 +4,7 @@ import { LanguageProvider } from './contexts/LanguageContext';
 import Login from './pages/Login';
 import MainBranchDashboard from './pages/MainBranchDashboard';
 import BranchUserDashboard from './pages/BranchUserDashboard';
+import AdminDashboard from './pages/AdminDashboard';
 import CreateAnnualPlan from './pages/CreateAnnualPlan';
 import ViewAnnualPlan from './pages/ViewAnnualPlan';
 import SubmitReport from './pages/SubmitReport';
@@ -55,7 +56,9 @@ function App() {
           path="/" 
           element={
             user ? (
-              user.role === 'main_branch' ? (
+              user.role === 'admin' ? (
+                <AdminDashboard user={user} onLogout={handleLogout} />
+              ) : user.role === 'main_branch' ? (
                 <MainBranchDashboard user={user} onLogout={handleLogout} />
               ) : (
                 <BranchUserDashboard user={user} onLogout={handleLogout} />
@@ -64,6 +67,11 @@ function App() {
               <Navigate to="/login" />
             )
           } 
+        />
+        
+        <Route 
+          path="/admin" 
+          element={user?.role === 'admin' ? <AdminDashboard user={user} onLogout={handleLogout} /> : <Navigate to="/" />} 
         />
         
         <Route 
