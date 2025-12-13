@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import pool from '../database/db.js';
-import { sendPasswordResetEmail } from '../services/sendGridService.js';
+import { sendPasswordResetEmail } from '../services/resendService.js';
 
 // Get all branches
 export const getAllBranches = async (req, res) => {

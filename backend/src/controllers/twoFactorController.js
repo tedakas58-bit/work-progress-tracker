@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import pool from '../database/db.js';
-import { generateVerificationCode, sendVerificationEmail } from '../services/sendGridService.js';
+import { generateVerificationCode, sendVerificationEmail } from '../services/resendService.js';
 
 // Step 1: Initial login (username/password)
 export const initiateLogin = async (req, res) => {
