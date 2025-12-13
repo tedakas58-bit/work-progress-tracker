@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api, { adminAPI } from '../services/api';
 import Navbar from '../components/Navbar';
+import ContactManager from '../components/ContactManager';
 
 const AdminDashboard = ({ user, onLogout }) => {
   const navigate = useNavigate();
@@ -293,6 +294,13 @@ const AdminDashboard = ({ user, onLogout }) => {
             </div>
           </div>
         </div>
+
+        {/* Contact Management Section */}
+        {!loading && (
+          <div className="mt-8">
+            <ContactManager users={users} onUserUpdate={fetchData} />
+          </div>
+        )}
 
         {/* Recent Activity */}
         {stats?.recentActivity && (
