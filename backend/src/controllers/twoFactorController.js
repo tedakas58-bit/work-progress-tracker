@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import pool from '../database/db.js';
-import { generateVerificationCode, sendVerificationEmail } from '../services/gmailService.js';
+import { generateVerificationCode, sendVerificationEmail } from '../services/resendService.js';
 
 // Step 1: Initial login (username/password)
 export const initiateLogin = async (req, res) => {
@@ -29,8 +29,8 @@ export const initiateLogin = async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
     
-    // Check if user has 2FA enabled (for now, enable for all users)
-    const twoFactorEnabled = true; // You can make this configurable per user
+    // Check if user has 2FA enabled (disabled by user request)
+    const twoFactorEnabled = false; // 2FA disabled - login with username/password only
     
     if (!twoFactorEnabled) {
       // If 2FA is disabled, proceed with normal login
