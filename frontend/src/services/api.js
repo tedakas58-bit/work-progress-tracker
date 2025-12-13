@@ -20,6 +20,12 @@ export const authAPI = {
   getProfile: () => api.get('/auth/profile'),
 };
 
+export const twoFactorAPI = {
+  initiateLogin: (credentials) => api.post('/2fa/login', credentials),
+  verifyCode: (data) => api.post('/2fa/verify', data),
+  resendCode: (data) => api.post('/2fa/resend', data),
+};
+
 export const annualPlanAPI = {
   create: (data) => api.post('/annual-plans', data),
   getAll: () => api.get('/annual-plans'),

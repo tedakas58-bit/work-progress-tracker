@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from './routes/authRoutes.js';
+import twoFactorRoutes from './routes/twoFactorRoutes.js';
 import annualPlanRoutes from './routes/annualPlanRoutes.js';
 import reportRoutes from './routes/reportRoutes.js';
 import actionRoutes from './routes/actionRoutes.js';
@@ -26,6 +27,7 @@ app.use(express.json());
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/2fa', twoFactorRoutes);
 app.use('/api/annual-plans', annualPlanRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/actions', actionRoutes);

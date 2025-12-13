@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs';
 import pool from '../database/db.js';
+import { sendPasswordResetEmail } from '../services/sendGridService.js';
 
 // Get all branches
 export const getAllBranches = async (req, res) => {
@@ -427,17 +428,33 @@ export const resetUserPassword = async (req, res) => {
     const result = await pool.query(
       `UPDATE users SET password = $1 
        WHERE id = $2 
-       RETURNING id, username, role, branch_name`,
+       RETURNING id, username, role, branch_name, email`,
       [hashedPassword, id]
     );
     
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'User not found' });
     }
+
+    const user = result.rows[0];
+    
+    // Send password reset email notification
+    try {
+      await sendPasswordResetEmail(user.email, newPassword, user.username);
+      console.log('✅ Password reset email sent to:', user.email);
+    } catch (emailError) {
+      console.error('❌ Failed to send password reset email:', emailError);
+      // Don't fail the password reset if email fails
+    }
     
     res.json({
-      message: 'Password reset successfully',
-      user: result.rows[0]
+      message: 'Password reset successfully and notification sent',
+      user: {
+        id: user.id,
+        username: user.username,
+        role: user.role,
+        branch_name: user.branch_name
+      }
     });
   } catch (error) {
     console.error('Reset password error:', error);

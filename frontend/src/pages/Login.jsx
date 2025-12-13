@@ -1,13 +1,17 @@
 import { useState } from 'react';
-import { authAPI } from '../services/api';
+import { authAPI, twoFactorAPI } from '../services/api';
 import { BarChart3, Lock, User, Sparkles, Languages } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import VerificationCodeInput from '../components/VerificationCodeInput';
 
 function Login({ onLogin }) {
   const { language, toggleLanguage, t } = useLanguage();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [step, setStep] = useState('login'); // 'login' or 'verification'
+  const [tempToken, setTempToken] = useState('');
+  const [userEmail, setUserEmail] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
@@ -16,14 +20,58 @@ function Login({ onLogin }) {
     setLoading(true);
 
     try {
-      const response = await authAPI.login({ username, password });
-      onLogin(response.data.user, response.data.token);
+      const response = await twoFactorAPI.initiateLogin({ username, password });
+      
+      if (response.data.requiresVerification) {
+        // 2FA required - show verification step
+        setTempToken(response.data.tempToken);
+        setUserEmail(response.data.userEmail || ''); // You might want to return this from backend
+        setStep('verification');
+      } else {
+        // Direct login (if 2FA is disabled for user)
+        onLogin(response.data.user, response.data.token);
+      }
     } catch (err) {
       setError(err.response?.data?.error || 'መግባት አልተሳካም');
     } finally {
       setLoading(false);
     }
   };
+
+  const handleVerifyCode = async (code) => {
+    setError('');
+    setLoading(true);
+
+    try {
+      const response = await twoFactorAPI.verifyCode({ code, tempToken });
+      onLogin(response.data.user, response.data.token);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Invalid verification code');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendCode = async () => {
+    try {
+      await twoFactorAPI.resendCode({ tempToken });
+      setError(''); // Clear any previous errors
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to resend code');
+    }
+  };
+
+  // Show verification step if 2FA is required
+  if (step === 'verification') {
+    return (
+      <VerificationCodeInput
+        onVerify={handleVerifyCode}
+        onResend={handleResendCode}
+        loading={loading}
+        email={userEmail}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
