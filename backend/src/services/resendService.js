@@ -19,7 +19,7 @@ export const sendVerificationEmail = async (email, code, username) => {
 
     const { data, error } = await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev',
-      to: [email],
+      to: [process.env.RESEND_TEST_EMAIL || email], // Use test email for development
       subject: 'Work Progress Tracker - Verification Code',
       html: `
         <!DOCTYPE html>
@@ -142,7 +142,7 @@ export const sendPasswordResetEmail = async (email, newPassword, username) => {
 
     const { data, error } = await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev',
-      to: [email],
+      to: [process.env.RESEND_TEST_EMAIL || email], // Use test email for development
       subject: 'Work Progress Tracker - Password Reset Notification',
       html: `
         <!DOCTYPE html>
