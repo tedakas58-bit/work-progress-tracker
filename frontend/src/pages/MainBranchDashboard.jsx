@@ -103,7 +103,7 @@ function MainBranchDashboard({ user, onLogout }) {
         return;
       }
       
-      const month = 4; // Tahsas month
+      const month = new Date().getMonth() + 1; // Current month
       const year = currentPlan?.year || 2018;
       
       console.log('Export params:', { month, year, language });
@@ -514,10 +514,10 @@ function MainBranchDashboard({ user, onLogout }) {
                 <div>
                   <h2 className="text-xl font-bold text-white flex items-center gap-2">
                     <Users size={24} />
-                    {t('የታህሳስ ወር ሪፖርቶች', 'Tahsas Month Reports')}
+                    {t('የአሁኑ ወር ሪፖርቶች', 'Current Month Reports')}
                   </h2>
                   <p className="text-sm text-purple-300 mt-1">
-                    {t('የታህሳስ ወር የቅርንጫፍ ሪፖርቶች', 'Branch reports for Tahsas month')}
+                    {t('የአሁኑ ወር የቅርንጫፍ ሪፖርቶች', 'Branch reports for current month')}
                   </p>
                 </div>
                 <button
@@ -539,9 +539,9 @@ function MainBranchDashboard({ user, onLogout }) {
                   <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
                     <Calendar size={32} className="text-white" />
                   </div>
-                  <p className="text-white font-semibold mb-2">{t('የታህሳስ ወር ሪፖርቶች የሉም', 'No Tahsas Month Reports')}</p>
+                  <p className="text-white font-semibold mb-2">{t('የአሁኑ ወር ሪፖርቶች የሉም', 'No Current Month Reports')}</p>
                   <p className="text-purple-200 text-sm">
-                    {t('የታህሳስ ወር ሪፖርቶች አልተገኙም', 'No Tahsas month reports found')}
+                    {t('የአሁኑ ወር ሪፖርቶች አልተገኙም', 'No current month reports found')}
                   </p>
                 </div>
               ) : (

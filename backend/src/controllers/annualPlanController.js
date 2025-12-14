@@ -395,7 +395,11 @@ export const getAllAmharicActivityReports = async (req, res) => {
     const tahsasMonth = 4;
     const currentYear = new Date().getFullYear();
     
-    // Get reports for Tahsas month only, grouped by branch
+    // Get reports for current month (December = 12), grouped by branch
+    const currentMonth = new Date().getMonth() + 1; // December = 12
+    
+    console.log('Filtering for month:', currentMonth, 'year:', currentYear);
+    
     const result = await pool.query(
       `SELECT 
          u.branch_name,
@@ -425,7 +429,7 @@ export const getAllAmharicActivityReports = async (req, res) => {
          AND mp.year = $2
        GROUP BY u.branch_name, u.username, ap.title, ap.plan_title_amharic
        ORDER BY u.branch_name`,
-      [tahsasMonth, currentYear]
+      [currentMonth, currentYear]
     );
     
     res.json(result.rows);
