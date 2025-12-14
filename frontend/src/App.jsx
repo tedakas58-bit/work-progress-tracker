@@ -11,6 +11,7 @@ import CreateAmharicPlan from './pages/CreateAmharicPlan';
 import EditAmharicPlan from './pages/EditAmharicPlan';
 import ManageAmharicPlans from './pages/ManageAmharicPlans';
 import AmharicPlanReports from './pages/AmharicPlanReports';
+import SubmitAmharicReport from './pages/SubmitAmharicReport';
 import ViewAnnualPlan from './pages/ViewAnnualPlan';
 import SubmitReport from './pages/SubmitReport';
 import BranchComparison from './pages/BranchComparison';
@@ -105,6 +106,11 @@ function App() {
         <Route 
           path="/amharic-plan-reports" 
           element={user?.role === 'branch_user' ? <AmharicPlanReports user={user} onLogout={handleLogout} /> : <Navigate to="/" />} 
+        />
+        
+        <Route 
+          path="/submit-amharic-report/:planId" 
+          element={user?.role === 'branch_user' ? <SubmitAmharicReport user={user} onLogout={handleLogout} /> : <Navigate to="/" />} 
         />
         
         <Route 

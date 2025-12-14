@@ -7,7 +7,9 @@ import {
   getPlanActivities,
   updateAmharicPlan,
   deleteAmharicPlan,
-  deleteAllAmharicPlans
+  deleteAllAmharicPlans,
+  submitAmharicActivityReports,
+  getAmharicActivityReports
 } from '../controllers/annualPlanController.js';
 import { authenticate, authorizeMainBranch } from '../middleware/auth.js';
 
@@ -21,5 +23,7 @@ router.get('/:id/activities', authenticate, getPlanActivities);
 router.put('/amharic/:id', authenticate, authorizeMainBranch, updateAmharicPlan);
 router.delete('/amharic/:id', authenticate, authorizeMainBranch, deleteAmharicPlan);
 router.delete('/amharic/all/delete', authenticate, authorizeMainBranch, deleteAllAmharicPlans);
+router.post('/:planId/activity-reports', authenticate, submitAmharicActivityReports);
+router.get('/:planId/activity-reports', authenticate, getAmharicActivityReports);
 
 export default router;

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { annualPlanAPI } from '../services/api';
 import Navbar from '../components/Navbar';
 import { ArrowLeft, FileText, Calendar, Target, CheckCircle, Clock, AlertCircle } from 'lucide-react';
@@ -9,13 +9,22 @@ import { ETHIOPIAN_MONTHS } from '../utils/ethiopianCalendar';
 function AmharicPlanReports({ user, onLogout }) {
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const location = useLocation();
   const [amharicPlans, setAmharicPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
     fetchAmharicPlans();
-  }, []);
+    
+    // Check for success message from navigation state
+    if (location.state?.message) {
+      setSuccessMessage(location.state.message);
+      // Clear the message after 5 seconds
+      setTimeout(() => setSuccessMessage(''), 5000);
+    }
+  }, [location.state]);
 
   const fetchAmharicPlans = async () => {
     try {
@@ -86,6 +95,12 @@ function AmharicPlanReports({ user, onLogout }) {
             </p>
           </div>
 
+          {successMessage && (
+            <div className="bg-green-500/20 border border-green-400/50 text-green-200 px-6 py-4 rounded-xl mb-6 backdrop-blur-sm animate-slide-in">
+              {successMessage}
+            </div>
+          )}
+
           {loading ? (
             <div className="text-center py-20">
               <div className="inline-block w-16 h-16 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin"></div>
@@ -143,11 +158,11 @@ function AmharicPlanReports({ user, onLogout }) {
                         <span>የተፈጠረበት ቀን: {new Date(plan.created_at).toLocaleDateString()}</span>
                       </div>
                       <button
-                        onClick={() => navigate(`/amharic-plan-report/${plan.id}`)}
+                        onClick={() => navigate(`/submit-amharic-report/${plan.id}`)}
                         className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white rounded-lg transition font-semibold"
                       >
                         <FileText size={16} />
-                        ሊፖርት አድርግ
+                        ሪፖርት አድርግ
                       </button>
                     </div>
                   </div>

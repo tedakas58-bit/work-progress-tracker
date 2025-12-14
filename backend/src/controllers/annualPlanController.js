@@ -273,6 +273,120 @@ export const deleteAllAmharicPlans = async (req, res) => {
   }
 };
 
+// Submit Amharic activity reports
+export const submitAmharicActivityReports = async (req, res) => {
+  const client = await pool.connect();
+  
+  try {
+    await client.query('BEGIN');
+    
+    const { planId } = req.params;
+    const { reports } = req.body; // Array of { activityId, achieved_number, notes_amharic }
+    const userId = req.user.id;
+    
+    // Get current month period for this plan
+    const currentMonth = new Date().getMonth() + 1;
+    const currentYear = new Date().getFullYear();
+    
+    const periodResult = await client.query(
+      `SELECT id FROM monthly_periods WHERE annual_plan_id = $1 AND month = $2 AND year = $3`,
+      [planId, currentMonth, currentYear]
+    );
+    
+    if (periodResult.rows.length === 0) {
+      return res.status(404).json({ error: 'No monthly period found for current month' });
+    }
+    
+    const monthlyPeriodId = periodResult.rows[0].id;
+    
+    // Submit reports for each activity
+    for (const report of reports) {
+      const { activityId, achieved_number, notes_amharic } = report;
+      const achievement_percentage = await calculateActivityPercentage(client, activityId, achieved_number);
+      
+      // Check if report already exists
+      const existingReport = await client.query(
+        `SELECT id FROM activity_reports 
+         WHERE plan_activity_id = $1 AND monthly_period_id = $2 AND branch_user_id = $3`,
+        [activityId, monthlyPeriodId, userId]
+      );
+      
+      if (existingReport.rows.length > 0) {
+        // Update existing report
+        await client.query(
+          `UPDATE activity_reports 
+           SET achieved_number = $1, achievement_percentage = $2, notes_amharic = $3, 
+               status = 'submitted', submitted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+           WHERE id = $4`,
+          [achieved_number, achievement_percentage, notes_amharic, existingReport.rows[0].id]
+        );
+      } else {
+        // Create new report
+        await client.query(
+          `INSERT INTO activity_reports (plan_activity_id, monthly_period_id, branch_user_id, 
+                                       achieved_number, achievement_percentage, notes_amharic, 
+                                       status, submitted_at) 
+           VALUES ($1, $2, $3, $4, $5, $6, 'submitted', CURRENT_TIMESTAMP)`,
+          [activityId, monthlyPeriodId, userId, achieved_number, achievement_percentage, notes_amharic]
+        );
+      }
+    }
+    
+    await client.query('COMMIT');
+    
+    res.json({ message: 'Amharic activity reports submitted successfully' });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Submit Amharic activity reports error:', error);
+    res.status(500).json({ error: 'Failed to submit activity reports' });
+  } finally {
+    client.release();
+  }
+};
+
+// Helper function to calculate activity percentage
+const calculateActivityPercentage = async (client, activityId, achievedNumber) => {
+  const result = await client.query(
+    `SELECT target_number FROM plan_activities WHERE id = $1`,
+    [activityId]
+  );
+  
+  if (result.rows.length === 0) return 0;
+  
+  const targetNumber = result.rows[0].target_number;
+  if (targetNumber === 0) return 0;
+  
+  return Math.min(Math.round((achievedNumber / targetNumber) * 100), 100);
+};
+
+// Get Amharic activity reports for a branch user
+export const getAmharicActivityReports = async (req, res) => {
+  try {
+    const { planId } = req.params;
+    const userId = req.user.id;
+    
+    // Get current month period
+    const currentMonth = new Date().getMonth() + 1;
+    const currentYear = new Date().getFullYear();
+    
+    const result = await pool.query(
+      `SELECT ar.*, pa.activity_number, pa.activity_title_amharic, pa.target_number, pa.target_unit_amharic,
+              mp.month, mp.year
+       FROM activity_reports ar
+       JOIN plan_activities pa ON ar.plan_activity_id = pa.id
+       JOIN monthly_periods mp ON ar.monthly_period_id = mp.id
+       WHERE pa.annual_plan_id = $1 AND ar.branch_user_id = $2 AND mp.month = $3 AND mp.year = $4
+       ORDER BY pa.sort_order, pa.activity_number`,
+      [planId, userId, currentMonth, currentYear]
+    );
+    
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Get Amharic activity reports error:', error);
+    res.status(500).json({ error: 'Failed to get activity reports' });
+  }
+};
+
 // Create new Amharic structured plan
 export const createAmharicPlan = async (req, res) => {
   const client = await pool.connect();
