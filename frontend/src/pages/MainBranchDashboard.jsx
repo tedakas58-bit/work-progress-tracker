@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { monthlyPlanAPI, reportAPI, annualPlanAPI } from '../services/api';
+import { monthlyPlanAPI, reportAPI } from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import { Calendar, TrendingUp, Users, Sparkles, Target, Edit, RefreshCw, BarChart3, Download, Award, FileText } from 'lucide-react';
+import { Calendar, TrendingUp, Users, Sparkles, RefreshCw, BarChart3, Download, Award, FileText } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { getEthiopianMonthName, formatEthiopianDeadline, getDaysUntilDeadline, getCurrentEthiopianDate } from '../utils/ethiopianCalendar';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
@@ -15,27 +15,21 @@ function MainBranchDashboard({ user, onLogout }) {
   const [currentPlan, setCurrentPlan] = useState(null);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [showUpdateModal, setShowUpdateModal] = useState(false);
-  const [newTarget, setNewTarget] = useState('');
-  const [updating, setUpdating] = useState(false);
+
   const [allReports, setAllReports] = useState([]);
   const [loadingReports, setLoadingReports] = useState(false);
   const [selectedBranches, setSelectedBranches] = useState([]);
   const [showExportMenu, setShowExportMenu] = useState(false);
-  const [annualPlans, setAnnualPlans] = useState([]);
-  const [selectedPlanId, setSelectedPlanId] = useState('');
 
   useEffect(() => {
     fetchCurrentPlan();
     fetchAllReports();
-    fetchAnnualPlans();
   }, []);
 
   const fetchCurrentPlan = async () => {
     try {
       const planResponse = await monthlyPlanAPI.getCurrent();
       setCurrentPlan(planResponse.data);
-      setNewTarget(planResponse.data.target_amount);
       
       // Fetch stats for current plan
       if (planResponse.data.id) {
@@ -71,31 +65,7 @@ function MainBranchDashboard({ user, onLogout }) {
     }
   };
 
-  const fetchAnnualPlans = async () => {
-    try {
-      const res = await annualPlanAPI.getAll();
-      setAnnualPlans(res.data || []);
-      if ((res.data || []).length > 0) {
-        setSelectedPlanId(res.data[0].id?.toString() || '');
-      }
-    } catch (error) {
-      console.error('Failed to fetch annual plans:', error);
-    }
-  };
 
-  const handleUpdateTarget = async () => {
-    setUpdating(true);
-    try {
-      await monthlyPlanAPI.updateTarget(parseFloat(newTarget));
-      await fetchCurrentPlan();
-      setShowUpdateModal(false);
-    } catch (error) {
-      console.error('Failed to update target:', error);
-      alert('Failed to update target');
-    } finally {
-      setUpdating(false);
-    }
-  };
 
   const handleExport = async (format) => {
     try {
@@ -203,43 +173,14 @@ function MainBranchDashboard({ user, onLogout }) {
           </div>
           
           <div className="flex gap-3">
-            <button
-              onClick={() => setShowUpdateModal(true)}
-              className="flex items-center space-x-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-3 rounded-xl transition transform hover:scale-105 shadow-lg"
-            >
-              <Edit size={20} />
-              <span className="font-semibold">{t('ዒላማ አዘምን', 'Update Target')}</span>
-            </button>
-            
             {user.role === 'main_branch' && (
-              <>
-                <button
-                  onClick={() => navigate('/create-amharic-plan')}
-                  className="flex items-center space-x-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-3 rounded-xl transition transform hover:scale-105 shadow-lg"
-                >
-                  <FileText size={20} />
-                  <span className="font-semibold">{t('የአማርኛ እቅድ ፍጠር', 'Create Amharic Plan')}</span>
-                </button>
-                
-                <div className="flex items-center gap-2 bg-white/10 border border-white/20 rounded-xl px-3 py-2">
-                  <select
-                    value={selectedPlanId}
-                    onChange={(e) => setSelectedPlanId(e.target.value)}
-                    className="bg-transparent text-white text-sm"
-                  >
-                    {annualPlans.map(p => (
-                      <option key={p.id} value={p.id} className="bg-slate-800">{p.title} ({p.year})</option>
-                    ))}
-                  </select>
-                  <button
-                    onClick={() => selectedPlanId && navigate(`/create-actions/${selectedPlanId}`)}
-                    className="flex items-center gap-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white px-4 py-2 rounded-lg transition text-sm font-semibold"
-                  >
-                    <Target size={16} />
-                    {t('ተግባሮች ጨምር', 'Add Activities')}
-                  </button>
-                </div>
-              </>
+              <button
+                onClick={() => navigate('/create-amharic-plan')}
+                className="flex items-center space-x-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-3 rounded-xl transition transform hover:scale-105 shadow-lg"
+              >
+                <FileText size={20} />
+                <span className="font-semibold">{t('የአማርኛ እቅድ ፍጠር', 'Create Amharic Plan')}</span>
+              </button>
             )}
           </div>
         </div>
@@ -640,46 +581,7 @@ function MainBranchDashboard({ user, onLogout }) {
           </div>
         )}
 
-        {/* Update Target Modal */}
-        {showUpdateModal && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="glass rounded-2xl shadow-2xl p-8 max-w-md w-full backdrop-blur-xl border border-white/20 animate-slide-in">
-              <h3 className="text-2xl font-bold text-white mb-4">{t('ወርሃዊ ዒላማ አዘምን', 'Update Monthly Target')}</h3>
-              <p className="text-purple-200 mb-6">
-                {t('የአሁኑን ወር ዒላማ ቁጥር ያዘምኑ', 'Update the target number for current month')}
-              </p>
-              
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-purple-200 mb-2">
-                  {t('አዲስ ዒላማ ቁጥር', 'New Target Number')}
-                </label>
-                <input
-                  type="number"
-                  value={newTarget}
-                  onChange={(e) => setNewTarget(e.target.value)}
-                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition backdrop-blur-sm"
-                  placeholder="114277.75"
-                />
-              </div>
 
-              <div className="flex gap-3">
-                <button
-                  onClick={handleUpdateTarget}
-                  disabled={updating}
-                  className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold py-3 rounded-xl transition transform hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
-                >
-                  {updating ? t('በማዘመን ላይ...', 'Updating...') : t('አዘምን', 'Update')}
-                </button>
-                <button
-                  onClick={() => setShowUpdateModal(false)}
-                  className="px-6 py-3 bg-white/10 border border-white/20 rounded-xl hover:bg-white/20 transition text-white font-semibold"
-                >
-                  {t('ሰርዝ', 'Cancel')}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

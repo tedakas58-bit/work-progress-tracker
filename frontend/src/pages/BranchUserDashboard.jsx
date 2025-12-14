@@ -100,6 +100,14 @@ function BranchUserDashboard({ user, onLogout }) {
               <Target size={20} />
               <span>{t('የተግባር ሪፖርቶች', 'Action Reports')}</span>
             </Link>
+            
+            <Link
+              to="/amharic-plan-reports"
+              className="flex items-center space-x-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-3 rounded-xl transition transform hover:scale-105 shadow-lg font-semibold"
+            >
+              <FileText size={20} />
+              <span>{t('የአማርኛ እቅድ ሪፖርቶች', 'Amharic Plan Reports')}</span>
+            </Link>
           </div>
         </div>
 
