@@ -18,7 +18,6 @@ function MainBranchDashboard({ user, onLogout }) {
 
   const [allReports, setAllReports] = useState([]);
   const [loadingReports, setLoadingReports] = useState(false);
-  const [selectedBranches, setSelectedBranches] = useState([]);
   const [showExportMenu, setShowExportMenu] = useState(false);
 
   useEffect(() => {
@@ -82,50 +81,46 @@ function MainBranchDashboard({ user, onLogout }) {
 
   const handleExport = async (format) => {
     try {
-      const reportsToExport = selectedBranches.length > 0
-        ? allReports.filter(r => selectedBranches.includes(r.branch_name))
-        : allReports;
+      console.log('Exporting reports:', { format, count: allReports.length, reports: allReports });
       
-      console.log('Exporting reports:', { format, count: reportsToExport.length, reports: reportsToExport });
-      
-      if (reportsToExport.length === 0) {
+      if (allReports.length === 0) {
         alert(t('ምንም ሪፖርቶች የሉም', 'No reports to export'));
         return;
       }
       
-      const month = currentPlan?.month || 6;
+      const month = 4; // Tahsas month
       const year = currentPlan?.year || 2018;
       
       console.log('Export params:', { month, year, language });
       
+      // Flatten the grouped data for export
+      const flattenedReports = allReports.flatMap(branchReport => 
+        branchReport.activities.map(activity => ({
+          branch_name: branchReport.branch_name,
+          plan_title: branchReport.plan_title,
+          plan_title_amharic: branchReport.plan_title_amharic,
+          activity_number: activity.activity_number,
+          activity_title_amharic: activity.activity_title_amharic,
+          target_number: activity.target_number,
+          target_unit_amharic: activity.target_unit_amharic,
+          achieved_number: activity.achieved_number,
+          achievement_percentage: activity.achievement_percentage,
+          status: activity.status
+        }))
+      );
+      
       if (format === 'pdf') {
-        exportToPDF(reportsToExport, month, year, language);
+        exportToPDF(flattenedReports, month, year, language);
       } else if (format === 'excel') {
-        exportToExcel(reportsToExport, month, year, language);
+        exportToExcel(flattenedReports, month, year, language);
       } else if (format === 'word') {
-        await exportToWord(reportsToExport, month, year, language);
+        await exportToWord(flattenedReports, month, year, language);
       }
       
       setShowExportMenu(false);
     } catch (error) {
       console.error('Export error:', error);
       alert(`Export failed: ${error.message}`);
-    }
-  };
-
-  const toggleBranchSelection = (branchName) => {
-    setSelectedBranches(prev =>
-      prev.includes(branchName)
-        ? prev.filter(b => b !== branchName)
-        : [...prev, branchName]
-    );
-  };
-
-  const selectAllBranches = () => {
-    if (selectedBranches.length === allReports.length) {
-      setSelectedBranches([]);
-    } else {
-      setSelectedBranches(allReports.map(r => r.branch_name));
     }
   };
 
@@ -149,30 +144,19 @@ function MainBranchDashboard({ user, onLogout }) {
     );
   };
 
-  // Prepare chart data for Amharic activity reports
-  // Group reports by branch and calculate overall progress
-  const branchData = allReports.reduce((acc, report) => {
-    const branchName = report.branch_name;
-    if (!acc[branchName]) {
-      acc[branchName] = {
-        name: branchName,
-        totalAchieved: 0,
-        totalTarget: 0,
-        reportCount: 0
-      };
-    }
-    acc[branchName].totalAchieved += report.achieved_number || 0;
-    acc[branchName].totalTarget += report.target_number || 0;
-    acc[branchName].reportCount += 1;
-    return acc;
-  }, {});
-
-  const chartData = Object.values(branchData).map(branch => ({
-    name: branch.name,
-    progress: branch.totalTarget > 0 ? Math.round((branch.totalAchieved / branch.totalTarget) * 100) : 0,
-    achieved: branch.totalAchieved,
-    target: branch.totalTarget
-  })).sort((a, b) => b.progress - a.progress);
+  // Prepare chart data for grouped Amharic activity reports
+  const chartData = allReports.map(branchReport => {
+    const totalAchieved = branchReport.activities.reduce((sum, activity) => sum + (activity.achieved_number || 0), 0);
+    const totalTarget = branchReport.activities.reduce((sum, activity) => sum + (activity.target_number || 0), 0);
+    const progress = totalTarget > 0 ? Math.round((totalAchieved / totalTarget) * 100) : 0;
+    
+    return {
+      name: branchReport.branch_name,
+      progress,
+      achieved: totalAchieved,
+      target: totalTarget
+    };
+  }).sort((a, b) => b.progress - a.progress);
 
   const gradeDistribution = chartData.reduce((acc, branch) => {
     const gradeInfo = calculateGrade(branch.progress);
@@ -478,38 +462,25 @@ function MainBranchDashboard({ user, onLogout }) {
               </div>
             )}
 
-            {/* All Branch Reports - Current Month Only */}
+            {/* Tahsas Month Branch Reports */}
             <div className="glass rounded-2xl shadow-xl backdrop-blur-xl border border-white/20">
               <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between">
                 <div>
                   <h2 className="text-xl font-bold text-white flex items-center gap-2">
                     <Users size={24} />
-                    {t('የሁሉም ቅርንጫፎች ሪፖርቶች - አሁኑ ወር', 'All Branch Reports - Current Month')}
+                    {t('የታህሳስ ወር ሪፖርቶች', 'Tahsas Month Reports')}
                   </h2>
                   <p className="text-sm text-purple-300 mt-1">
-                    {t('የአሁኑ ወር ሪፖርቶች ብቻ', 'Current month reports only')}
+                    {t('የታህሳስ ወር የቅርንጫፍ ሪፖርቶች', 'Branch reports for Tahsas month')}
                   </p>
-                  {selectedBranches.length > 0 && (
-                    <p className="text-sm text-purple-300 mt-1">
-                      {selectedBranches.length} {t('ቅርንጫፎች ተመርጠዋል', 'branches selected')}
-                    </p>
-                  )}
                 </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={selectAllBranches}
-                    className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition text-white text-sm"
-                  >
-                    {selectedBranches.length === allReports.length ? t('ሁሉንም አትመርጥ', 'Deselect All') : t('ሁሉንም ምረጥ', 'Select All')}
-                  </button>
-                  <button
-                    onClick={fetchAllReports}
-                    className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition text-white text-sm"
-                  >
-                    <RefreshCw size={16} />
-                    {t('አድስ', 'Refresh')}
-                  </button>
-                </div>
+                <button
+                  onClick={fetchAllReports}
+                  className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition text-white text-sm"
+                >
+                  <RefreshCw size={16} />
+                  {t('አድስ', 'Refresh')}
+                </button>
               </div>
               
               {loadingReports ? (
@@ -522,79 +493,65 @@ function MainBranchDashboard({ user, onLogout }) {
                   <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
                     <Calendar size={32} className="text-white" />
                   </div>
-                  <p className="text-white font-semibold mb-2">{t('ሪፖርቶች አልተገኙም', 'No Reports Found')}</p>
-                  <div className="text-purple-200 text-sm space-y-2 max-w-md mx-auto">
-                    <p>{t('ሪፖርቶች ለማየት የሚከተሉት ሁኔታዎች መሟላት አለባቸው:', 'To see reports, the following conditions must be met:')}</p>
-                    <ul className="text-left space-y-1 mt-3">
-                      <li className="flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 bg-purple-400 rounded-full"></div>
-                        {t('የአማርኛ እቅድ መፈጠር አለበት', 'Amharic plan must be created')}
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 bg-purple-400 rounded-full"></div>
-                        {t('የቅርንጫፍ ተጠቃሚዎች ሪፖርት ማስገባት አለባቸው', 'Branch users must submit reports')}
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 bg-purple-400 rounded-full"></div>
-                        {t('ሪፖርቶች ለአሁኑ ወር መሆን አለባቸው', 'Reports must be for current month')}
-                      </li>
-                    </ul>
-                    <div className="mt-4 p-3 bg-blue-500/20 border border-blue-400/30 rounded-lg">
-                      <p className="text-blue-200 text-xs">
-                        {t('ቅርንጫፍ ተጠቃሚዎች "የአማርኛ እቅድ ሪፖርቶች" ገጽ ላይ ሄደው ሪፖርት ማስገባት ይችላሉ', 'Branch users can go to "Amharic Plan Reports" page to submit reports')}
-                      </p>
-                    </div>
-                  </div>
+                  <p className="text-white font-semibold mb-2">{t('የታህሳስ ወር ሪፖርቶች የሉም', 'No Tahsas Month Reports')}</p>
+                  <p className="text-purple-200 text-sm">
+                    {t('የታህሳስ ወር ሪፖርቶች አልተገኙም', 'No Tahsas month reports found')}
+                  </p>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-white/5 border-b border-white/10">
-                      <tr>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-purple-300 uppercase tracking-wider w-12"></th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-purple-300 uppercase tracking-wider">{t('ቅርንጫፍ', 'Branch')}</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-purple-300 uppercase tracking-wider">{t('እቅድ', 'Plan')}</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-purple-300 uppercase tracking-wider">{t('እንቅስቃሴ', 'Activity')}</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-purple-300 uppercase tracking-wider">{t('ዒላማ', 'Target')}</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-purple-300 uppercase tracking-wider">{t('የተሳካ', 'Achieved')}</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-purple-300 uppercase tracking-wider">{t('እድገት', 'Progress')}</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-purple-300 uppercase tracking-wider">{t('ሁኔታ', 'Status')}</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/10">
-                      {allReports.map((report) => {
-                        const progressPercentage = report.target_number > 0 ? Math.round((report.achieved_number / report.target_number) * 100) : 0;
-                        return (
-                        <tr key={report.id} className="hover:bg-white/5 transition">
-                          <td className="px-6 py-4">
-                            <input
-                              type="checkbox"
-                              checked={selectedBranches.includes(report.branch_name)}
-                              onChange={() => toggleBranchSelection(report.branch_name)}
-                              className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
-                            />
-                          </td>
-                          <td className="px-6 py-4 text-sm text-white font-medium">{report.branch_name}</td>
-                          <td className="px-6 py-4 text-sm text-purple-200" style={{ fontFamily: "'Noto Sans Ethiopic', sans-serif" }}>
-                            {report.plan_title_amharic || report.plan_title}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-blue-300">
-                            <div className="flex items-center gap-2">
-                              <span className="font-mono text-xs bg-blue-500/20 px-2 py-1 rounded">{report.activity_number}</span>
-                              <span className="text-xs" style={{ fontFamily: "'Noto Sans Ethiopic', sans-serif" }}>
-                                {report.activity_title_amharic?.substring(0, 50)}...
-                              </span>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 text-sm text-green-300 font-semibold">
-                            {report.target_number?.toLocaleString()} {report.target_unit_amharic}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-blue-300 font-semibold">
-                            {report.achieved_number?.toLocaleString() || '0'} {report.target_unit_amharic}
-                          </td>
-                          <td className="px-6 py-4 text-sm">
-                            <div className="flex items-center space-x-3">
-                              <div className="flex-1 bg-white/10 rounded-full h-2 min-w-[80px]">
+                <div className="space-y-4 p-6">
+                  {allReports.map((branchReport, index) => (
+                    <div key={`${branchReport.branch_name}-${index}`} className="bg-white/5 rounded-xl p-5 border border-white/10">
+                      {/* Branch Header */}
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center font-bold text-white text-lg">
+                            {branchReport.branch_name.charAt(branchReport.branch_name.length - 1)}
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-semibold text-white">{branchReport.branch_name}</h3>
+                            <p className="text-sm text-purple-200" style={{ fontFamily: "'Noto Sans Ethiopic', sans-serif" }}>
+                              {branchReport.plan_title_amharic || branchReport.plan_title}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Activities Summary */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {branchReport.activities.map((activity, actIndex) => {
+                          const progressPercentage = activity.target_number > 0 ? 
+                            Math.round((activity.achieved_number / activity.target_number) * 100) : 0;
+                          
+                          return (
+                            <div key={`${activity.activity_number}-${actIndex}`} 
+                                 className="bg-white/5 rounded-lg p-4 border border-white/10">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="font-mono text-sm bg-blue-500/20 text-blue-300 px-2 py-1 rounded">
+                                  {activity.activity_number}
+                                </span>
+                                <span className={`text-xs font-semibold ${
+                                  progressPercentage >= 100 ? 'text-green-300' :
+                                  progressPercentage >= 75 ? 'text-yellow-300' : 'text-red-300'
+                                }`}>
+                                  {progressPercentage}%
+                                </span>
+                              </div>
+                              
+                              <div className="text-sm text-white mb-2">
+                                <span className="text-green-300 font-semibold">
+                                  {activity.achieved_number?.toLocaleString()}
+                                </span>
+                                <span className="text-purple-200 mx-1">/</span>
+                                <span className="text-blue-300">
+                                  {activity.target_number?.toLocaleString()}
+                                </span>
+                                <span className="text-purple-200 text-xs ml-1">
+                                  {activity.target_unit_amharic}
+                                </span>
+                              </div>
+
+                              <div className="w-full bg-white/10 rounded-full h-2 mb-2">
                                 <div
                                   className={`h-2 rounded-full transition-all duration-500 ${
                                     progressPercentage >= 100 ? 'bg-gradient-to-r from-green-500 to-emerald-500' :
@@ -604,20 +561,24 @@ function MainBranchDashboard({ user, onLogout }) {
                                   style={{ width: `${Math.min(progressPercentage, 100)}%` }}
                                 />
                               </div>
-                              <span className={`text-xs font-bold min-w-[45px] ${
-                                progressPercentage >= 100 ? 'text-green-300' :
-                                progressPercentage >= 75 ? 'text-yellow-300' : 'text-red-300'
-                              }`}>
-                                {progressPercentage}%
-                              </span>
+
+                              <div className="flex justify-between items-center">
+                                <span className={`text-xs px-2 py-1 rounded ${
+                                  activity.status === 'submitted' ? 'bg-green-500/20 text-green-300' :
+                                  activity.status === 'pending' ? 'bg-yellow-500/20 text-yellow-300' :
+                                  'bg-red-500/20 text-red-300'
+                                }`}>
+                                  {activity.status === 'submitted' ? t('ገብቷል', 'Submitted') :
+                                   activity.status === 'pending' ? t('በመጠባበቅ ላይ', 'Pending') :
+                                   t('ዘግይቷል', 'Late')}
+                                </span>
+                              </div>
                             </div>
-                          </td>
-                          <td className="px-6 py-4">{getStatusBadge(report.status)}</td>
-                        </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

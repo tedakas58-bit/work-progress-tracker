@@ -390,66 +390,43 @@ export const getAmharicActivityReports = async (req, res) => {
 // Get all Amharic activity reports for main branch (to view all branch submissions)
 export const getAllAmharicActivityReports = async (req, res) => {
   try {
-    console.log('=== BACKEND: getAllAmharicActivityReports called ===');
-    
-    // Get current month period
-    const currentMonth = new Date().getMonth() + 1;
+    // Get current Ethiopian month (Tahsas = month 4 in Ethiopian calendar)
+    // For now, we'll use month 4 (Tahsas) - you can adjust this based on your Ethiopian calendar logic
+    const tahsasMonth = 4;
     const currentYear = new Date().getFullYear();
     
-    console.log('Current month:', currentMonth, 'Current year:', currentYear);
-    
-    // First, let's check if we have any Amharic plans at all
-    const plansCheck = await pool.query(
-      `SELECT id, title, plan_title_amharic, plan_type FROM annual_plans WHERE plan_type = 'amharic_structured'`
-    );
-    console.log('Amharic plans found:', plansCheck.rows.length);
-    
-    // Check if we have any activity reports at all (regardless of month)
-    const allReportsCheck = await pool.query(
-      `SELECT COUNT(*) as total FROM activity_reports ar
-       JOIN plan_activities pa ON ar.plan_activity_id = pa.id
-       JOIN annual_plans ap ON pa.annual_plan_id = ap.id
-       WHERE ap.plan_type = 'amharic_structured'`
-    );
-    console.log('Total activity reports found:', allReportsCheck.rows[0].total);
-    
-    // Get all reports (not just current month) to see if there's any data
+    // Get reports for Tahsas month only, grouped by branch
     const result = await pool.query(
       `SELECT 
-         ar.*,
-         pa.activity_number,
-         pa.activity_title_amharic,
-         pa.target_number,
-         pa.target_unit_amharic,
+         u.branch_name,
+         u.username,
          ap.title as plan_title,
          ap.plan_title_amharic,
-         u.username,
-         u.branch_name,
-         mp.month,
-         mp.year
+         json_agg(
+           json_build_object(
+             'activity_number', pa.activity_number,
+             'activity_title_amharic', pa.activity_title_amharic,
+             'target_number', pa.target_number,
+             'target_unit_amharic', pa.target_unit_amharic,
+             'achieved_number', ar.achieved_number,
+             'achievement_percentage', ar.achievement_percentage,
+             'status', ar.status,
+             'notes_amharic', ar.notes_amharic,
+             'submitted_at', ar.submitted_at
+           ) ORDER BY pa.sort_order, pa.activity_number
+         ) as activities
        FROM activity_reports ar
        JOIN plan_activities pa ON ar.plan_activity_id = pa.id
        JOIN annual_plans ap ON pa.annual_plan_id = ap.id
        JOIN users u ON ar.branch_user_id = u.id
        JOIN monthly_periods mp ON ar.monthly_period_id = mp.id
        WHERE ap.plan_type = 'amharic_structured'
-       ORDER BY ap.id, pa.sort_order, pa.activity_number, u.branch_name`
+         AND mp.month = $1
+         AND mp.year = $2
+       GROUP BY u.branch_name, u.username, ap.title, ap.plan_title_amharic
+       ORDER BY u.branch_name`,
+      [tahsasMonth, currentYear]
     );
-    
-    console.log('Query result rows:', result.rows.length);
-    if (result.rows.length > 0) {
-      console.log('Sample report:', {
-        activity: result.rows[0].activity_number,
-        branch: result.rows[0].branch_name,
-        achieved: result.rows[0].achieved_number,
-        target: result.rows[0].target_number,
-        month: result.rows[0].month,
-        year: result.rows[0].year,
-        status: result.rows[0].status
-      });
-    }
-    
-    console.log('=== END BACKEND DEBUG ===');
     
     res.json(result.rows);
   } catch (error) {
