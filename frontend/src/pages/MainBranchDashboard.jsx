@@ -50,17 +50,29 @@ function MainBranchDashboard({ user, onLogout }) {
       const response = await annualPlanAPI.getAllAmharicActivityReports();
       console.log('=== FRONTEND: Response received ===');
       console.log('Total activity reports received:', response.data.length);
-      console.log('Sample reports:', response.data.slice(0, 3).map(r => ({ 
-        activity: r.activity_number, 
-        branch: r.branch_name,
-        achieved: r.achieved_number,
-        target: r.target_number,
-        status: r.status
-      })));
+      
+      if (response.data.length > 0) {
+        console.log('Sample reports:', response.data.slice(0, 3).map(r => ({ 
+          activity: r.activity_number, 
+          branch: r.branch_name,
+          achieved: r.achieved_number,
+          target: r.target_number,
+          status: r.status,
+          month: r.month,
+          year: r.year
+        })));
+      } else {
+        console.log('No reports found. This could mean:');
+        console.log('1. No Amharic plans have been created yet');
+        console.log('2. No branch users have submitted reports yet');
+        console.log('3. Reports exist but for different months');
+      }
+      
       console.log('=== END FRONTEND DEBUG ===');
       setAllReports(response.data);
     } catch (error) {
       console.error('Failed to fetch Amharic activity reports:', error);
+      console.error('Error details:', error.response?.data || error.message);
     } finally {
       setLoadingReports(false);
     }
@@ -510,10 +522,29 @@ function MainBranchDashboard({ user, onLogout }) {
                   <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
                     <Calendar size={32} className="text-white" />
                   </div>
-                  <p className="text-white font-semibold mb-2">{t('የአሁኑ ወር ሪፖርቶች የሉም', 'No Current Month Reports')}</p>
-                  <p className="text-purple-200 text-sm">
-                    {t('የአሁኑ ወር ሪፖርቶች አልተገኙም', 'No current month reports found')}
-                  </p>
+                  <p className="text-white font-semibold mb-2">{t('ሪፖርቶች አልተገኙም', 'No Reports Found')}</p>
+                  <div className="text-purple-200 text-sm space-y-2 max-w-md mx-auto">
+                    <p>{t('ሪፖርቶች ለማየት የሚከተሉት ሁኔታዎች መሟላት አለባቸው:', 'To see reports, the following conditions must be met:')}</p>
+                    <ul className="text-left space-y-1 mt-3">
+                      <li className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 bg-purple-400 rounded-full"></div>
+                        {t('የአማርኛ እቅድ መፈጠር አለበት', 'Amharic plan must be created')}
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 bg-purple-400 rounded-full"></div>
+                        {t('የቅርንጫፍ ተጠቃሚዎች ሪፖርት ማስገባት አለባቸው', 'Branch users must submit reports')}
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 bg-purple-400 rounded-full"></div>
+                        {t('ሪፖርቶች ለአሁኑ ወር መሆን አለባቸው', 'Reports must be for current month')}
+                      </li>
+                    </ul>
+                    <div className="mt-4 p-3 bg-blue-500/20 border border-blue-400/30 rounded-lg">
+                      <p className="text-blue-200 text-xs">
+                        {t('ቅርንጫፍ ተጠቃሚዎች "የአማርኛ እቅድ ሪፖርቶች" ገጽ ላይ ሄደው ሪፖርት ማስገባት ይችላሉ', 'Branch users can go to "Amharic Plan Reports" page to submit reports')}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <div className="overflow-x-auto">

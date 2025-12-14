@@ -390,10 +390,30 @@ export const getAmharicActivityReports = async (req, res) => {
 // Get all Amharic activity reports for main branch (to view all branch submissions)
 export const getAllAmharicActivityReports = async (req, res) => {
   try {
+    console.log('=== BACKEND: getAllAmharicActivityReports called ===');
+    
     // Get current month period
     const currentMonth = new Date().getMonth() + 1;
     const currentYear = new Date().getFullYear();
     
+    console.log('Current month:', currentMonth, 'Current year:', currentYear);
+    
+    // First, let's check if we have any Amharic plans at all
+    const plansCheck = await pool.query(
+      `SELECT id, title, plan_title_amharic, plan_type FROM annual_plans WHERE plan_type = 'amharic_structured'`
+    );
+    console.log('Amharic plans found:', plansCheck.rows.length);
+    
+    // Check if we have any activity reports at all (regardless of month)
+    const allReportsCheck = await pool.query(
+      `SELECT COUNT(*) as total FROM activity_reports ar
+       JOIN plan_activities pa ON ar.plan_activity_id = pa.id
+       JOIN annual_plans ap ON pa.annual_plan_id = ap.id
+       WHERE ap.plan_type = 'amharic_structured'`
+    );
+    console.log('Total activity reports found:', allReportsCheck.rows[0].total);
+    
+    // Get all reports (not just current month) to see if there's any data
     const result = await pool.query(
       `SELECT 
          ar.*,
@@ -412,12 +432,24 @@ export const getAllAmharicActivityReports = async (req, res) => {
        JOIN annual_plans ap ON pa.annual_plan_id = ap.id
        JOIN users u ON ar.branch_user_id = u.id
        JOIN monthly_periods mp ON ar.monthly_period_id = mp.id
-       WHERE ap.plan_type = 'amharic_structured' 
-         AND mp.month = $1 
-         AND mp.year = $2
-       ORDER BY ap.id, pa.sort_order, pa.activity_number, u.branch_name`,
-      [currentMonth, currentYear]
+       WHERE ap.plan_type = 'amharic_structured'
+       ORDER BY ap.id, pa.sort_order, pa.activity_number, u.branch_name`
     );
+    
+    console.log('Query result rows:', result.rows.length);
+    if (result.rows.length > 0) {
+      console.log('Sample report:', {
+        activity: result.rows[0].activity_number,
+        branch: result.rows[0].branch_name,
+        achieved: result.rows[0].achieved_number,
+        target: result.rows[0].target_number,
+        month: result.rows[0].month,
+        year: result.rows[0].year,
+        status: result.rows[0].status
+      });
+    }
+    
+    console.log('=== END BACKEND DEBUG ===');
     
     res.json(result.rows);
   } catch (error) {
