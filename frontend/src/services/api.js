@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 // Support both local development and production deployment
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 
+  (window.location.hostname === 'localhost' ? 'http://localhost:5000/api' : 'https://work-progress-tracker.onrender.com/api');
 
 const api = axios.create({
   baseURL: API_URL,
