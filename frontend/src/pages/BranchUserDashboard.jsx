@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { annualPlanAPI } from '../services/api';
 import Navbar from '../components/Navbar';
-import { FileText, Clock, CheckCircle, AlertCircle, Award, Calendar } from 'lucide-react';
+import { FileText, Clock, CheckCircle, AlertCircle, Award, Calendar, TrendingUp } from 'lucide-react';
 import { getCurrentEthiopianMonth, ETHIOPIAN_MONTHS } from '../utils/ethiopianCalendar';
 import { useLanguage } from '../contexts/LanguageContext';
 
