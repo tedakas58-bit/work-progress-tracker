@@ -11,6 +11,7 @@ import EditAmharicPlan from './pages/EditAmharicPlan';
 import ManageAmharicPlans from './pages/ManageAmharicPlans';
 import AmharicPlanReports from './pages/AmharicPlanReports';
 import SubmitAmharicReport from './pages/SubmitAmharicReport';
+import ViewAmharicReports from './pages/ViewAmharicReports';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -99,6 +100,11 @@ function App() {
         <Route 
           path="/submit-amharic-report/:planId" 
           element={user?.role === 'branch_user' ? <SubmitAmharicReport user={user} onLogout={handleLogout} /> : <Navigate to="/" />} 
+        />
+        
+        <Route 
+          path="/view-amharic-reports" 
+          element={user?.role === 'main_branch' ? <ViewAmharicReports user={user} onLogout={handleLogout} /> : <Navigate to="/" />} 
         />
       </Routes>
     </BrowserRouter>

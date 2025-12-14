@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { annualPlanAPI } from '../services/api';
 import Navbar from '../components/Navbar';
-import { ArrowLeft, Edit, Trash2, Plus, AlertTriangle, Calendar, Target } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, Plus, AlertTriangle, Calendar, Target, Download, FileText, ChevronDown } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { ETHIOPIAN_MONTHS } from '../utils/ethiopianCalendar';
+import { exportAmharicPlanToPDF, exportAmharicPlanToExcel, exportAmharicPlanToWord } from '../utils/exportReports';
 
 function ManageAmharicPlans({ user, onLogout }) {
   const { t } = useLanguage();
@@ -16,6 +17,7 @@ function ManageAmharicPlans({ user, onLogout }) {
   const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
   const [planToDelete, setPlanToDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [showExportDropdown, setShowExportDropdown] = useState({});
 
   useEffect(() => {
     fetchAmharicPlans();
@@ -66,6 +68,39 @@ function ManageAmharicPlans({ user, onLogout }) {
   const openDeleteModal = (plan) => {
     setPlanToDelete(plan);
     setShowDeleteModal(true);
+  };
+
+  const handleExportPlan = async (plan, format) => {
+    try {
+      // Fetch activities for this plan
+      const activitiesResponse = await annualPlanAPI.getAmharicPlanActivities(plan.id);
+      const activities = activitiesResponse.data || [];
+      
+      switch (format) {
+        case 'pdf':
+          exportAmharicPlanToPDF(plan, activities, 'am');
+          break;
+        case 'excel':
+          exportAmharicPlanToExcel(plan, activities, 'am');
+          break;
+        case 'word':
+          await exportAmharicPlanToWord(plan, activities, 'am');
+          break;
+      }
+      
+      // Close dropdown
+      setShowExportDropdown({});
+    } catch (error) {
+      console.error('Error exporting plan:', error);
+      setError('Failed to export plan');
+    }
+  };
+
+  const toggleExportDropdown = (planId) => {
+    setShowExportDropdown(prev => ({
+      ...prev,
+      [planId]: !prev[planId]
+    }));
   };
 
   return (
@@ -177,6 +212,44 @@ function ManageAmharicPlans({ user, onLogout }) {
                       </div>
                       
                       <div className="ml-6 flex gap-2">
+                        {/* Export Dropdown */}
+                        <div className="relative">
+                          <button
+                            onClick={() => toggleExportDropdown(plan.id)}
+                            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-lg transition font-semibold"
+                          >
+                            <Download size={16} />
+                            ውጣ
+                            <ChevronDown size={14} className={`transition-transform ${showExportDropdown[plan.id] ? 'rotate-180' : ''}`} />
+                          </button>
+                          
+                          {showExportDropdown[plan.id] && (
+                            <div className="absolute right-0 mt-2 w-48 bg-slate-800 border border-white/20 rounded-lg shadow-2xl backdrop-blur-xl z-50">
+                              <button
+                                onClick={() => handleExportPlan(plan, 'pdf')}
+                                className="w-full px-4 py-3 text-left text-white hover:bg-white/10 transition flex items-center gap-2 rounded-t-lg"
+                              >
+                                <FileText size={16} />
+                                <span>PDF ወደ ውጭ ላክ</span>
+                              </button>
+                              <button
+                                onClick={() => handleExportPlan(plan, 'excel')}
+                                className="w-full px-4 py-3 text-left text-white hover:bg-white/10 transition flex items-center gap-2"
+                              >
+                                <FileText size={16} />
+                                <span>Excel ወደ ውጭ ላክ</span>
+                              </button>
+                              <button
+                                onClick={() => handleExportPlan(plan, 'word')}
+                                className="w-full px-4 py-3 text-left text-white hover:bg-white/10 transition flex items-center gap-2 rounded-b-lg"
+                              >
+                                <FileText size={16} />
+                                <span>Word ወደ ውጭ ላክ</span>
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                        
                         <button
                           onClick={() => navigate(`/edit-amharic-plan/${plan.id}`)}
                           className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg transition font-semibold"

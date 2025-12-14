@@ -325,6 +325,14 @@ function MainBranchDashboard({ user, onLogout }) {
                   <FileText size={20} />
                   <span className="font-semibold">{t('እቅዶች አስተዳደር', 'Manage Plans')}</span>
                 </button>
+                
+                <button
+                  onClick={() => navigate('/view-amharic-reports')}
+                  className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 rounded-xl transition transform hover:scale-105 shadow-lg"
+                >
+                  <FileText size={20} />
+                  <span className="font-semibold">{t('የአማርኛ ሪፖርቶች', 'Amharic Reports')}</span>
+                </button>
               </>
             )}
           </div>

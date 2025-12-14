@@ -21,6 +21,7 @@ router.post('/amharic', authenticate, authorizeMainBranch, createAmharicPlan);
 router.get('/', authenticate, getAnnualPlans);
 router.get('/:id', authenticate, getAnnualPlanById);
 router.get('/:id/activities', authenticate, getPlanActivities);
+router.get('/amharic/:id/activities', authenticate, getPlanActivities);
 router.put('/amharic/:id', authenticate, authorizeMainBranch, updateAmharicPlan);
 router.delete('/amharic/:id', authenticate, authorizeMainBranch, deleteAmharicPlan);
 router.delete('/amharic/all/delete', authenticate, authorizeMainBranch, deleteAllAmharicPlans);

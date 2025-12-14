@@ -35,6 +35,7 @@ export const annualPlanAPI = {
   getAll: () => api.get('/annual-plans'),
   getById: (id) => api.get(`/annual-plans/${id}`),
   getPlanActivities: (id) => api.get(`/annual-plans/${id}/activities`),
+  getAmharicPlanActivities: (id) => api.get(`/annual-plans/amharic/${id}/activities`),
   updateAmharicPlan: (id, data) => api.put(`/annual-plans/amharic/${id}`, data),
   deleteAmharicPlan: (id) => api.delete(`/annual-plans/amharic/${id}`),
   deleteAllAmharicPlans: () => api.delete('/annual-plans/amharic/all/delete'),
