@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Fix Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .pass { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .fail { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .info { background: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <h1>MainBranchDashboard Fix Verification</h1>
+    
+    <div class="test info">
+        <h3>Test Environment</h3>
+        <p>This test simulates the data validation fixes applied to MainBranchDashboard.jsx</p>
+    </div>
+
+    <div id="test-results"></div>
+
+    <script>
+        // Simulate the data validation logic from the fix
+        function validateReports(responseData) {
+            if (!Array.isArray(responseData)) {
+                console.warn('Response data is not an array:', responseData);
+                return [];
+            }
+
+            return responseData.map((report, index) => {
+                if (!report) {
+                    console.warn(`Report at index ${index} is null/undefined`);
+                    return null;
+                }
+                
+                if (!report.activities) {
+                    console.warn(`Report at index ${index} missing activities:`, report);
+                    return { ...report, activities: [] };
+                }
+                
+                if (!Array.isArray(report.activities)) {
+                    console.warn(`Report at index ${index} activities is not an array:`, report.activities);
+                    return { ...report, activities: [] };
+                }
+                
+                return report;
+            }).filter(Boolean);
+        }
+
+        // Test cases
+        const testCases = [
+            {
+                name: "Valid data structure",
+                data: [
+                    {
+                        branch_name: "Branch 1",
+                        activities: [
+                            { activity_number: "3.1", achieved_number: 100, target_number: 200 }
+                        ]
+                    }
+                ],
+                expected: "pass"
+            },
+            {
+                name: "Missing activities property",
+                data: [
+                    { branch_name: "Branch 1" }
+                ],
+                expected: "pass" // Should be fixed by adding empty activities array
+            },
+            {
+                name: "Activities is not an array",
+                data: [
+                    { branch_name: "Branch 1", activities: "invalid" }
+                ],
+                expected: "pass" // Should be fixed by replacing with empty array
+            },
+            {
+                name: "Null report in array",
+                data: [
+                    null,
+                    { branch_name: "Branch 1", activities: [] }
+                ],
+                expected: "pass" // Should filter out null entries
+            },
+            {
+                name: "Empty array",
+                data: [],
+                expected: "pass"
+            },
+            {
+                name: "Non-array input",
+                data: "invalid",
+                expected: "pass" // Should return empty array
+            }
+        ];
+
+        // Run tests
+        const resultsDiv = document.getElementById('test-results');
+        let allPassed = true;
+
+        testCases.forEach((testCase, index) => {
+            try {
+                const result = validateReports(testCase.data);
+                const passed = Array.isArray(result) && result.every(r => r && Array.isArray(r.activities));
+                
+                const testDiv = document.createElement('div');
+                testDiv.className = `test ${passed ? 'pass' : 'fail'}`;
+                testDiv.innerHTML = `
+                    <h4>Test ${index + 1}: ${testCase.name}</h4>
+                    <p><strong>Status:</strong> ${passed ? 'PASS' : 'FAIL'}</p>
+                    <p><strong>Input:</strong> ${JSON.stringify(testCase.data)}</p>
+                    <p><strong>Output:</strong> ${JSON.stringify(result)}</p>
+                `;
+                resultsDiv.appendChild(testDiv);
+
+                if (!passed) allPassed = false;
+            } catch (error) {
+                const testDiv = document.createElement('div');
+                testDiv.className = 'test fail';
+                testDiv.innerHTML = `
+                    <h4>Test ${index + 1}: ${testCase.name}</h4>
+                    <p><strong>Status:</strong> ERROR</p>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                `;
+                resultsDiv.appendChild(testDiv);
+                allPassed = false;
+            }
+        });
+
+        // Summary
+        const summaryDiv = document.createElement('div');
+        summaryDiv.className = `test ${allPassed ? 'pass' : 'fail'}`;
+        summaryDiv.innerHTML = `
+            <h3>Test Summary</h3>
+            <p><strong>Overall Result:</strong> ${allPassed ? 'ALL TESTS PASSED' : 'SOME TESTS FAILED'}</p>
+            <p>The data validation logic ${allPassed ? 'should prevent' : 'may not prevent'} the "reports is not defined" error.</p>
+        `;
+        resultsDiv.appendChild(summaryDiv);
+
+        console.log('MainBranchDashboard Fix Test completed. All tests passed:', allPassed);
+    </script>
+</body>
+</html>

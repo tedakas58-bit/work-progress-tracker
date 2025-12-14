@@ -12,6 +12,9 @@ import { exportToPDF, exportToExcel, exportToWord } from '../utils/exportReports
 function MainBranchDashboard({ user, onLogout }) {
   const { t, language } = useLanguage();
   const navigate = useNavigate();
+  
+  // Version identifier for deployment tracking
+  console.log('MainBranchDashboard v2.1 - Reports Error Fix');
   const [currentPlan, setCurrentPlan] = useState(null);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -45,7 +48,7 @@ function MainBranchDashboard({ user, onLogout }) {
   const fetchAllReports = async () => {
     setLoadingReports(true);
     try {
-      console.log('=== FRONTEND: Fetching Amharic activity reports ===');
+      console.log('=== FRONTEND: Fetching Amharic activity reports (v2) ===');
       const response = await annualPlanAPI.getAllAmharicActivityReports();
       console.log('=== FRONTEND: Response received ===');
       console.log('Total activity reports received:', response.data.length);
