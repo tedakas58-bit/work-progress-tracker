@@ -136,6 +136,143 @@ export const getAnnualPlanById = async (req, res) => {
   }
 };
 
+// Get plan activities for a specific plan
+export const getPlanActivities = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const result = await pool.query(
+      `SELECT * FROM plan_activities WHERE annual_plan_id = $1 ORDER BY sort_order, activity_number`,
+      [id]
+    );
+    
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Get plan activities error:', error);
+    res.status(500).json({ error: 'Failed to get plan activities' });
+  }
+};
+
+// Update Amharic structured plan
+export const updateAmharicPlan = async (req, res) => {
+  const client = await pool.connect();
+  
+  try {
+    await client.query('BEGIN');
+    
+    const { id } = req.params;
+    const { title, title_amharic, description_amharic, year, month, plan_type, activities } = req.body;
+    
+    // Update the annual plan
+    await client.query(
+      `UPDATE annual_plans 
+       SET title = $1, plan_title_amharic = $2, plan_description_amharic = $3, 
+           year = $4, plan_month = $5, plan_type = $6, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $7`,
+      [title, title_amharic, description_amharic, year, month || 1, plan_type || 'amharic_structured', id]
+    );
+
+    // Delete existing activities
+    await client.query('DELETE FROM plan_activities WHERE annual_plan_id = $1', [id]);
+
+    // Insert updated activities
+    for (let i = 0; i < activities.length; i++) {
+      const activity = activities[i];
+      await client.query(
+        `INSERT INTO plan_activities (annual_plan_id, activity_number, activity_title_amharic, target_number, target_unit_amharic, sort_order) 
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [id, activity.activity_number, activity.activity_title_amharic, activity.target_number, activity.target_unit_amharic, i]
+      );
+    }
+
+    await client.query('COMMIT');
+
+    res.json({ message: 'Amharic plan updated successfully' });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Update Amharic plan error:', error);
+    res.status(500).json({ error: 'Failed to update Amharic plan' });
+  } finally {
+    client.release();
+  }
+};
+
+// Delete Amharic structured plan
+export const deleteAmharicPlan = async (req, res) => {
+  const client = await pool.connect();
+  
+  try {
+    await client.query('BEGIN');
+    
+    const { id } = req.params;
+    
+    // Delete activity reports first (foreign key constraint)
+    await client.query(
+      `DELETE FROM activity_reports 
+       WHERE plan_activity_id IN (
+         SELECT id FROM plan_activities WHERE annual_plan_id = $1
+       )`,
+      [id]
+    );
+    
+    // Delete plan activities
+    await client.query('DELETE FROM plan_activities WHERE annual_plan_id = $1', [id]);
+    
+    // Delete the plan itself
+    await client.query('DELETE FROM annual_plans WHERE id = $1 AND plan_type = $2', [id, 'amharic_structured']);
+
+    await client.query('COMMIT');
+
+    res.json({ message: 'Amharic plan deleted successfully' });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Delete Amharic plan error:', error);
+    res.status(500).json({ error: 'Failed to delete Amharic plan' });
+  } finally {
+    client.release();
+  }
+};
+
+// Delete all Amharic structured plans and reports
+export const deleteAllAmharicPlans = async (req, res) => {
+  const client = await pool.connect();
+  
+  try {
+    await client.query('BEGIN');
+    
+    // Delete all activity reports for Amharic plans
+    await client.query(
+      `DELETE FROM activity_reports 
+       WHERE plan_activity_id IN (
+         SELECT pa.id FROM plan_activities pa
+         JOIN annual_plans ap ON pa.annual_plan_id = ap.id
+         WHERE ap.plan_type = 'amharic_structured'
+       )`
+    );
+    
+    // Delete all plan activities for Amharic plans
+    await client.query(
+      `DELETE FROM plan_activities 
+       WHERE annual_plan_id IN (
+         SELECT id FROM annual_plans WHERE plan_type = 'amharic_structured'
+       )`
+    );
+    
+    // Delete all Amharic plans
+    await client.query(`DELETE FROM annual_plans WHERE plan_type = 'amharic_structured'`);
+
+    await client.query('COMMIT');
+
+    res.json({ message: 'All Amharic plans and reports deleted successfully' });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Delete all Amharic plans error:', error);
+    res.status(500).json({ error: 'Failed to delete all Amharic plans' });
+  } finally {
+    client.release();
+  }
+};
+
 // Create new Amharic structured plan
 export const createAmharicPlan = async (req, res) => {
   const client = await pool.connect();

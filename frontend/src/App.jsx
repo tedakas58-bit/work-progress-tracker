@@ -8,6 +8,8 @@ import AdminDashboard from './pages/AdminDashboard';
 
 import CreateAnnualPlan from './pages/CreateAnnualPlan';
 import CreateAmharicPlan from './pages/CreateAmharicPlan';
+import EditAmharicPlan from './pages/EditAmharicPlan';
+import ManageAmharicPlans from './pages/ManageAmharicPlans';
 import AmharicPlanReports from './pages/AmharicPlanReports';
 import ViewAnnualPlan from './pages/ViewAnnualPlan';
 import SubmitReport from './pages/SubmitReport';
@@ -88,6 +90,16 @@ function App() {
         <Route 
           path="/create-amharic-plan" 
           element={user?.role === 'main_branch' ? <CreateAmharicPlan user={user} onLogout={handleLogout} /> : <Navigate to="/" />} 
+        />
+        
+        <Route 
+          path="/edit-amharic-plan/:id" 
+          element={user?.role === 'main_branch' ? <EditAmharicPlan user={user} onLogout={handleLogout} /> : <Navigate to="/" />} 
+        />
+        
+        <Route 
+          path="/manage-amharic-plans" 
+          element={user?.role === 'main_branch' ? <ManageAmharicPlans user={user} onLogout={handleLogout} /> : <Navigate to="/" />} 
         />
         
         <Route 
