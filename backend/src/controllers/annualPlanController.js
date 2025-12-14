@@ -387,6 +387,45 @@ export const getAmharicActivityReports = async (req, res) => {
   }
 };
 
+// Get all Amharic activity reports for main branch (to view all branch submissions)
+export const getAllAmharicActivityReports = async (req, res) => {
+  try {
+    // Get current month period
+    const currentMonth = new Date().getMonth() + 1;
+    const currentYear = new Date().getFullYear();
+    
+    const result = await pool.query(
+      `SELECT 
+         ar.*,
+         pa.activity_number,
+         pa.activity_title_amharic,
+         pa.target_number,
+         pa.target_unit_amharic,
+         ap.title as plan_title,
+         ap.plan_title_amharic,
+         u.username,
+         u.branch_name,
+         mp.month,
+         mp.year
+       FROM activity_reports ar
+       JOIN plan_activities pa ON ar.plan_activity_id = pa.id
+       JOIN annual_plans ap ON pa.annual_plan_id = ap.id
+       JOIN users u ON ar.branch_user_id = u.id
+       JOIN monthly_periods mp ON ar.monthly_period_id = mp.id
+       WHERE ap.plan_type = 'amharic_structured' 
+         AND mp.month = $1 
+         AND mp.year = $2
+       ORDER BY ap.id, pa.sort_order, pa.activity_number, u.branch_name`,
+      [currentMonth, currentYear]
+    );
+    
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Get all Amharic activity reports error:', error);
+    res.status(500).json({ error: 'Failed to get all activity reports' });
+  }
+};
+
 // Create new Amharic structured plan
 export const createAmharicPlan = async (req, res) => {
   const client = await pool.connect();

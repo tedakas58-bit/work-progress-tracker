@@ -1,46 +1,70 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { reportAPI } from '../services/api';
+import { annualPlanAPI } from '../services/api';
 import Navbar from '../components/Navbar';
-import AchievementModal from '../components/AchievementModal';
-import { FileText, Clock, CheckCircle, AlertCircle, TrendingUp, Target, Award, Plus } from 'lucide-react';
-import { filterFutureReports, getCurrentEthiopianMonth, getEthiopianMonthName, formatEthiopianDeadline, getDaysUntilDeadline } from '../utils/ethiopianCalendar';
+import { FileText, Clock, CheckCircle, AlertCircle, Award, Calendar } from 'lucide-react';
+import { getCurrentEthiopianMonth, ETHIOPIAN_MONTHS } from '../utils/ethiopianCalendar';
 import { useLanguage } from '../contexts/LanguageContext';
 
 function BranchUserDashboard({ user, onLogout }) {
   const { t, language } = useLanguage();
-  const [reports, setReports] = useState([]);
+  const [amharicPlans, setAmharicPlans] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showAchievementModal, setShowAchievementModal] = useState(false);
-  const [selectedReport, setSelectedReport] = useState(null);
+  const [planStats, setPlanStats] = useState({
+    totalPlans: 0,
+    totalActivities: 0,
+    submittedReports: 0,
+    pendingReports: 0
+  });
 
   useEffect(() => {
-    fetchReports();
+    fetchAmharicPlansAndReports();
   }, []);
 
-  const fetchReports = async () => {
+  const fetchAmharicPlansAndReports = async () => {
     try {
-      const response = await reportAPI.getMyReports();
+      // Fetch all Amharic plans
+      const plansResponse = await annualPlanAPI.getAll();
+      const amharicPlansOnly = plansResponse.data.filter(plan => plan.plan_type === 'amharic_structured');
+      setAmharicPlans(amharicPlansOnly);
 
-      // Show only current month's reports (monthly auto-renewal system)
-      const currentMonth = getCurrentEthiopianMonth();
-      const currentMonthReports = response.data.filter(r => r.month === currentMonth);
+      // Calculate statistics
+      let totalActivities = 0;
+      let submittedReports = 0;
+      let pendingReports = 0;
 
-      setReports(currentMonthReports);
+      for (const plan of amharicPlansOnly) {
+        try {
+          // Get activities for each plan
+          const activitiesResponse = await annualPlanAPI.getPlanActivities(plan.id);
+          totalActivities += activitiesResponse.data.length;
+
+          // Get reports for each plan (if any)
+          try {
+            const reportsResponse = await annualPlanAPI.getAmharicActivityReports(plan.id);
+            const reports = reportsResponse.data || [];
+            submittedReports += reports.filter(r => r.status === 'submitted').length;
+            pendingReports += reports.filter(r => r.status === 'pending').length;
+          } catch (err) {
+            // No reports yet for this plan
+            pendingReports += activitiesResponse.data.length;
+          }
+        } catch (err) {
+          console.error('Error fetching activities for plan:', plan.id, err);
+        }
+      }
+
+      setPlanStats({
+        totalPlans: amharicPlansOnly.length,
+        totalActivities,
+        submittedReports,
+        pendingReports
+      });
     } catch (error) {
-      console.error('Failed to fetch reports:', error);
+      console.error('Failed to fetch Amharic plans:', error);
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleOpenAchievementModal = (report) => {
-    setSelectedReport(report);
-    setShowAchievementModal(true);
-  };
-
-  const handleAchievementSuccess = () => {
-    fetchReports();
   };
 
   const getStatusBadge = (status) => {
@@ -94,14 +118,6 @@ function BranchUserDashboard({ user, onLogout }) {
             </div>
             
             <Link
-              to="/action-reports"
-              className="flex items-center space-x-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white px-6 py-3 rounded-xl transition transform hover:scale-105 shadow-lg font-semibold"
-            >
-              <Target size={20} />
-              <span>{t('የተግባር ሪፖርቶች', 'Action Reports')}</span>
-            </Link>
-            
-            <Link
               to="/amharic-plan-reports"
               className="flex items-center space-x-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-3 rounded-xl transition transform hover:scale-105 shadow-lg font-semibold"
             >
@@ -119,19 +135,19 @@ function BranchUserDashboard({ user, onLogout }) {
               </div>
               <TrendingUp className="text-blue-400" size={20} />
             </div>
-            <div className="text-sm text-purple-300 mb-1">{t('ጠቅላላ ሪፖርቶች', 'Total Reports')}</div>
-            <div className="text-4xl font-bold text-white">{stats.total}</div>
+            <div className="text-sm text-purple-300 mb-1">{t('የአማርኛ እቅዶች', 'Amharic Plans')}</div>
+            <div className="text-4xl font-bold text-white">{planStats.totalPlans}</div>
           </div>
           
-          <div className="glass rounded-2xl shadow-xl p-6 backdrop-blur-xl border border-yellow-400/30 card-hover animate-fade-in" style={{ animationDelay: '0.1s' }}>
+          <div className="glass rounded-2xl shadow-xl p-6 backdrop-blur-xl border border-blue-400/30 card-hover animate-fade-in" style={{ animationDelay: '0.1s' }}>
             <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg">
-                <Clock size={24} className="text-white" />
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg">
+                <Calendar size={24} className="text-white" />
               </div>
-              <div className="w-3 h-3 bg-yellow-400 rounded-full animate-pulse"></div>
+              <div className="w-3 h-3 bg-blue-400 rounded-full"></div>
             </div>
-            <div className="text-sm text-yellow-300 mb-1">{t('በመጠባበቅ ላይ', 'Pending')}</div>
-            <div className="text-4xl font-bold text-white">{stats.pending}</div>
+            <div className="text-sm text-blue-300 mb-1">{t('ጠቅላላ እንቅስቃሴዎች', 'Total Activities')}</div>
+            <div className="text-4xl font-bold text-white">{planStats.totalActivities}</div>
           </div>
           
           <div className="glass rounded-2xl shadow-xl p-6 backdrop-blur-xl border border-green-400/30 card-hover animate-fade-in" style={{ animationDelay: '0.2s' }}>
@@ -141,121 +157,85 @@ function BranchUserDashboard({ user, onLogout }) {
               </div>
               <div className="w-3 h-3 bg-green-400 rounded-full"></div>
             </div>
-            <div className="text-sm text-green-300 mb-1">{t('ገብቷል', 'Submitted')}</div>
-            <div className="text-4xl font-bold text-white">{stats.submitted}</div>
+            <div className="text-sm text-green-300 mb-1">{t('የተላኩ ሪፖርቶች', 'Submitted Reports')}</div>
+            <div className="text-4xl font-bold text-white">{planStats.submittedReports}</div>
           </div>
           
-          <div className="glass rounded-2xl shadow-xl p-6 backdrop-blur-xl border border-red-400/30 card-hover animate-fade-in" style={{ animationDelay: '0.3s' }}>
+          <div className="glass rounded-2xl shadow-xl p-6 backdrop-blur-xl border border-yellow-400/30 card-hover animate-fade-in" style={{ animationDelay: '0.3s' }}>
             <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg">
-                <AlertCircle size={24} className="text-white" />
+              <div className="w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg">
+                <Clock size={24} className="text-white" />
               </div>
-              <div className="w-3 h-3 bg-red-400 rounded-full animate-pulse"></div>
+              <div className="w-3 h-3 bg-yellow-400 rounded-full animate-pulse"></div>
             </div>
-            <div className="text-sm text-red-300 mb-1">{t('ዘግይቷል', 'Late')}</div>
-            <div className="text-4xl font-bold text-white">{stats.late}</div>
+            <div className="text-sm text-yellow-300 mb-1">{t('በመጠባበቅ ላይ', 'Pending Reports')}</div>
+            <div className="text-4xl font-bold text-white">{planStats.pendingReports}</div>
           </div>
         </div>
 
         {loading ? (
           <div className="text-center py-20">
             <div className="inline-block w-16 h-16 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin"></div>
-            <p className="text-purple-200 mt-4">{t('ሪፖርቶች በመጫን ላይ...', 'Loading reports...')}</p>
+            <p className="text-purple-200 mt-4">{t('የአማርኛ እቅዶች በመጫን ላይ...', 'Loading Amharic plans...')}</p>
           </div>
-        ) : reports.length === 0 ? (
+        ) : amharicPlans.length === 0 ? (
           <div className="glass rounded-3xl shadow-2xl p-16 text-center backdrop-blur-xl border border-white/20 animate-fade-in">
             <div className="w-24 h-24 bg-gradient-to-br from-purple-500 to-pink-500 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-2xl">
               <FileText size={48} className="text-white" />
             </div>
-            <h3 className="text-2xl font-bold text-white mb-3">{t('ምንም ሪፖርቶች የሉም', 'No Reports Available')}</h3>
+            <h3 className="text-2xl font-bold text-white mb-3">{t('ምንም የአማርኛ እቅዶች የሉም', 'No Amharic Plans Available')}</h3>
             <p className="text-purple-200 max-w-md mx-auto">
-              {t('ሪፖርቶች የሚታዩት የዓመታዊ እቅዶች በዋና ቅርንጫፍ ከተፈጠሩ በኋላ ነው', 'Reports will appear once annual plans are created by the main branch')}
+              {t('የአማርኛ እቅዶች አሁንም አልተፈጠሩም። ዋና ቅርንጫፍ የአማርኛ እቅድ ሲፈጥር እዚህ ይታያል።', 'Amharic plans have not been created yet. They will appear here when the main branch creates Amharic plans.')}
             </p>
           </div>
         ) : (
-          <div className="glass rounded-2xl shadow-2xl overflow-hidden backdrop-blur-xl border border-white/20 animate-fade-in">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-white/5 border-b border-white/10">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-purple-300 uppercase tracking-wider">{t('እቅድ', 'Plan')}</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-purple-300 uppercase tracking-wider">{t('ጊዜ', 'Period')}</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-purple-300 uppercase tracking-wider">{t('ዒላማ', 'Target')}</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-purple-300 uppercase tracking-wider">{t('የተሳካ', 'Achieved')}</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-purple-300 uppercase tracking-wider">{t('እድገት', 'Progress')}</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-purple-300 uppercase tracking-wider">{t('የመጨረሻ ቀን', 'Deadline')}</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-purple-300 uppercase tracking-wider">{t('ሁኔታ', 'Status')}</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-purple-300 uppercase tracking-wider">{t('ተግባር', 'Action')}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/10">
-                  {reports.map((report) => (
-                    <tr key={report.id} className="hover:bg-white/5 transition">
-                      <td className="px-6 py-4 text-sm text-white font-medium">{report.plan_title}</td>
-                      <td className="px-6 py-4 text-sm text-purple-200">
-                        {getEthiopianMonthName(report.month, language === 'am' ? 'amharic' : 'english')} {report.year}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-green-300 font-semibold">
-                        {report.target_amount?.toLocaleString()}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-blue-300 font-semibold">
-                        {report.achieved_amount?.toLocaleString() || '0'}
-                      </td>
-                      <td className="px-6 py-4 text-sm">
-                        <div className="flex items-center space-x-3">
-                          <div className="flex-1 bg-white/10 rounded-full h-2 min-w-[80px]">
-                            <div
-                              className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-500"
-                              style={{ width: `${Math.min(report.progress_percentage || 0, 100)}%` }}
-                            />
-                          </div>
-                          <span className="text-xs font-bold text-white min-w-[45px]">
-                            {(Number(report.progress_percentage) || 0).toFixed(1)}%
-                          </span>
+          <div className="space-y-6">
+            {amharicPlans.map((plan) => {
+              const monthName = ETHIOPIAN_MONTHS.find(m => m.number === plan.plan_month)?.amharic || '';
+              
+              return (
+                <div key={plan.id} className="glass rounded-2xl shadow-xl p-6 backdrop-blur-xl border border-white/20 hover:border-white/30 transition animate-fade-in">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <h3 className="text-xl font-bold text-white mb-2" style={{ fontFamily: "'Noto Sans Ethiopic', sans-serif" }}>
+                        {plan.plan_title_amharic || plan.title}
+                      </h3>
+                      <div className="flex items-center gap-4 text-sm text-purple-200 mb-3">
+                        <div className="flex items-center gap-1">
+                          <Calendar size={16} />
+                          <span>{monthName} {plan.year}</span>
                         </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-purple-200">
-                          {formatEthiopianDeadline(report.deadline, report.month, language === 'am' ? 'amharic' : 'english')}
+                        <div className="flex items-center gap-1">
+                          <FileText size={16} />
+                          <span>የአማርኛ መዋቅራዊ እቅድ</span>
                         </div>
-                        <div className="text-xs text-purple-300 mt-1">
-                          {getDaysUntilDeadline(report.deadline, report.month) > 0 
-                            ? `${getDaysUntilDeadline(report.deadline, report.month)} ${t('ቀናት', 'days')}`
-                            : t('ጊዜው አልፏል', 'Passed')}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">{getStatusBadge(report.status)}</td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => handleOpenAchievementModal(report)}
-                            className="inline-flex items-center px-3 py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white text-xs font-semibold rounded-lg transition transform hover:scale-105"
-                            title={t('ስኬት ያክሉ', 'Add Achievement')}
-                          >
-                            <Plus size={16} />
-                          </button>
-                          <Link
-                            to={`/submit-report/${report.id}`}
-                            className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-sm font-semibold rounded-lg transition transform hover:scale-105"
-                          >
-                            {report.status === 'pending' ? t('አስገባ', 'Submit') : t('ይመልከቱ/አርትዕ', 'View/Edit')}
-                          </Link>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                      </div>
+                      {plan.plan_description_amharic && (
+                        <p className="text-purple-200 text-sm mb-4" style={{ fontFamily: "'Noto Sans Ethiopic', sans-serif" }}>
+                          {plan.plan_description_amharic}
+                        </p>
+                      )}
+                    </div>
+                    
+                    <div className="ml-6">
+                      <Link
+                        to={`/submit-amharic-report/${plan.id}`}
+                        className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white rounded-xl transition transform hover:scale-105 shadow-lg font-semibold"
+                      >
+                        <FileText size={20} />
+                        ሪፖርት አድርግ
+                      </Link>
+                    </div>
+                  </div>
+                  
+                  <div className="text-sm text-purple-300">
+                    <span>የተፈጠረበት ቀን: {new Date(plan.created_at).toLocaleDateString()}</span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
-
-        <AchievementModal
-          report={selectedReport}
-          isOpen={showAchievementModal}
-          onClose={() => setShowAchievementModal(false)}
-          onSuccess={handleAchievementSuccess}
-        />
       </div>
     </div>
   );

@@ -37,6 +37,7 @@ export const annualPlanAPI = {
   deleteAllAmharicPlans: () => api.delete('/annual-plans/amharic/all/delete'),
   submitAmharicActivityReports: (planId, reports) => api.post(`/annual-plans/${planId}/activity-reports`, { reports }),
   getAmharicActivityReports: (planId) => api.get(`/annual-plans/${planId}/activity-reports`),
+  getAllAmharicActivityReports: () => api.get('/annual-plans/activity-reports/all'),
 };
 
 export const reportAPI = {

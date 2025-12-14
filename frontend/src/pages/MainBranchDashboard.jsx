@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { monthlyPlanAPI, reportAPI } from '../services/api';
+import { monthlyPlanAPI, reportAPI, annualPlanAPI } from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { Calendar, TrendingUp, Users, Sparkles, Target, RefreshCw, BarChart3, Download, Award, FileText } from 'lucide-react';
@@ -46,20 +46,21 @@ function MainBranchDashboard({ user, onLogout }) {
   const fetchAllReports = async () => {
     setLoadingReports(true);
     try {
-      console.log('=== FRONTEND: Fetching current month reports ===');
-      const response = await reportAPI.getAllCurrentMonthReports();
+      console.log('=== FRONTEND: Fetching Amharic activity reports ===');
+      const response = await annualPlanAPI.getAllAmharicActivityReports();
       console.log('=== FRONTEND: Response received ===');
-      console.log('Total reports received:', response.data.length);
+      console.log('Total activity reports received:', response.data.length);
       console.log('Sample reports:', response.data.slice(0, 3).map(r => ({ 
-        month: r.month, 
-        year: r.year, 
+        activity: r.activity_number, 
         branch: r.branch_name,
-        submitted: r.submitted_at 
+        achieved: r.achieved_number,
+        target: r.target_number,
+        status: r.status
       })));
       console.log('=== END FRONTEND DEBUG ===');
       setAllReports(response.data);
     } catch (error) {
-      console.error('Failed to fetch all reports:', error);
+      console.error('Failed to fetch Amharic activity reports:', error);
     } finally {
       setLoadingReports(false);
     }
@@ -136,16 +137,33 @@ function MainBranchDashboard({ user, onLogout }) {
     );
   };
 
-  // Prepare chart data
-  const chartData = allReports.map(report => ({
-    name: report.branch_name,
-    progress: Number(report.progress_percentage) || 0,
-    achieved: report.achieved_amount || 0,
-    target: report.target_amount || 0
+  // Prepare chart data for Amharic activity reports
+  // Group reports by branch and calculate overall progress
+  const branchData = allReports.reduce((acc, report) => {
+    const branchName = report.branch_name;
+    if (!acc[branchName]) {
+      acc[branchName] = {
+        name: branchName,
+        totalAchieved: 0,
+        totalTarget: 0,
+        reportCount: 0
+      };
+    }
+    acc[branchName].totalAchieved += report.achieved_number || 0;
+    acc[branchName].totalTarget += report.target_number || 0;
+    acc[branchName].reportCount += 1;
+    return acc;
+  }, {});
+
+  const chartData = Object.values(branchData).map(branch => ({
+    name: branch.name,
+    progress: branch.totalTarget > 0 ? Math.round((branch.totalAchieved / branch.totalTarget) * 100) : 0,
+    achieved: branch.totalAchieved,
+    target: branch.totalTarget
   })).sort((a, b) => b.progress - a.progress);
 
-  const gradeDistribution = allReports.reduce((acc, report) => {
-    const gradeInfo = calculateGrade(report.progress_percentage || 0);
+  const gradeDistribution = chartData.reduce((acc, branch) => {
+    const gradeInfo = calculateGrade(branch.progress);
     acc[gradeInfo.grade] = (acc[gradeInfo.grade] || 0) + 1;
     return acc;
   }, {});
@@ -504,17 +522,17 @@ function MainBranchDashboard({ user, onLogout }) {
                       <tr>
                         <th className="px-6 py-4 text-left text-xs font-semibold text-purple-300 uppercase tracking-wider w-12"></th>
                         <th className="px-6 py-4 text-left text-xs font-semibold text-purple-300 uppercase tracking-wider">{t('ቅርንጫፍ', 'Branch')}</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-purple-300 uppercase tracking-wider">{t('እቅድ', 'Plan')}</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-purple-300 uppercase tracking-wider">{t('እንቅስቃሴ', 'Activity')}</th>
                         <th className="px-6 py-4 text-left text-xs font-semibold text-purple-300 uppercase tracking-wider">{t('ዒላማ', 'Target')}</th>
                         <th className="px-6 py-4 text-left text-xs font-semibold text-purple-300 uppercase tracking-wider">{t('የተሳካ', 'Achieved')}</th>
                         <th className="px-6 py-4 text-left text-xs font-semibold text-purple-300 uppercase tracking-wider">{t('እድገት', 'Progress')}</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-purple-300 uppercase tracking-wider">{t('ደረጃ', 'Grade')}</th>
                         <th className="px-6 py-4 text-left text-xs font-semibold text-purple-300 uppercase tracking-wider">{t('ሁኔታ', 'Status')}</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-purple-300 uppercase tracking-wider">{t('የገባበት ቀን', 'Submitted')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/10">
                       {allReports.map((report) => {
-                        const gradeInfo = calculateGrade(report.progress_percentage || 0);
+                        const progressPercentage = report.target_number > 0 ? Math.round((report.achieved_number / report.target_number) * 100) : 0;
                         return (
                         <tr key={report.id} className="hover:bg-white/5 transition">
                           <td className="px-6 py-4">
@@ -526,34 +544,44 @@ function MainBranchDashboard({ user, onLogout }) {
                             />
                           </td>
                           <td className="px-6 py-4 text-sm text-white font-medium">{report.branch_name}</td>
+                          <td className="px-6 py-4 text-sm text-purple-200" style={{ fontFamily: "'Noto Sans Ethiopic', sans-serif" }}>
+                            {report.plan_title_amharic || report.plan_title}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-blue-300">
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono text-xs bg-blue-500/20 px-2 py-1 rounded">{report.activity_number}</span>
+                              <span className="text-xs" style={{ fontFamily: "'Noto Sans Ethiopic', sans-serif" }}>
+                                {report.activity_title_amharic?.substring(0, 50)}...
+                              </span>
+                            </div>
+                          </td>
                           <td className="px-6 py-4 text-sm text-green-300 font-semibold">
-                            {report.target_amount?.toLocaleString()}
+                            {report.target_number?.toLocaleString()} {report.target_unit_amharic}
                           </td>
                           <td className="px-6 py-4 text-sm text-blue-300 font-semibold">
-                            {report.achieved_amount?.toLocaleString() || '0'}
+                            {report.achieved_number?.toLocaleString() || '0'} {report.target_unit_amharic}
                           </td>
                           <td className="px-6 py-4 text-sm">
                             <div className="flex items-center space-x-3">
                               <div className="flex-1 bg-white/10 rounded-full h-2 min-w-[80px]">
                                 <div
-                                  className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-500"
-                                  style={{ width: `${Math.min(report.progress_percentage || 0, 100)}%` }}
+                                  className={`h-2 rounded-full transition-all duration-500 ${
+                                    progressPercentage >= 100 ? 'bg-gradient-to-r from-green-500 to-emerald-500' :
+                                    progressPercentage >= 75 ? 'bg-gradient-to-r from-yellow-500 to-orange-500' :
+                                    'bg-gradient-to-r from-red-500 to-pink-500'
+                                  }`}
+                                  style={{ width: `${Math.min(progressPercentage, 100)}%` }}
                                 />
                               </div>
-                              <span className="text-xs font-bold text-white min-w-[45px]">
-                                {(Number(report.progress_percentage) || 0).toFixed(1)}%
+                              <span className={`text-xs font-bold min-w-[45px] ${
+                                progressPercentage >= 100 ? 'text-green-300' :
+                                progressPercentage >= 75 ? 'text-yellow-300' : 'text-red-300'
+                              }`}>
+                                {progressPercentage}%
                               </span>
                             </div>
                           </td>
-                          <td className="px-6 py-4">
-                            <div className={`${gradeInfo.bgColor} border ${gradeInfo.borderColor} rounded-lg px-3 py-1 inline-flex items-center gap-2`}>
-                              <span className={`text-lg font-bold ${gradeInfo.color}`}>{gradeInfo.grade}</span>
-                            </div>
-                          </td>
                           <td className="px-6 py-4">{getStatusBadge(report.status)}</td>
-                          <td className="px-6 py-4 text-sm text-purple-200">
-                            {report.submitted_at ? new Date(report.submitted_at).toLocaleString() : '-'}
-                          </td>
                         </tr>
                         );
                       })}

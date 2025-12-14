@@ -6,18 +6,11 @@ import MainBranchDashboard from './pages/MainBranchDashboard';
 import BranchUserDashboard from './pages/BranchUserDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 
-import CreateAnnualPlan from './pages/CreateAnnualPlan';
 import CreateAmharicPlan from './pages/CreateAmharicPlan';
 import EditAmharicPlan from './pages/EditAmharicPlan';
 import ManageAmharicPlans from './pages/ManageAmharicPlans';
 import AmharicPlanReports from './pages/AmharicPlanReports';
 import SubmitAmharicReport from './pages/SubmitAmharicReport';
-import ViewAnnualPlan from './pages/ViewAnnualPlan';
-import SubmitReport from './pages/SubmitReport';
-import BranchComparison from './pages/BranchComparison';
-import CreateActions from './pages/CreateActions';
-import ActionReports from './pages/ActionReports';
-import SubmitActionReport from './pages/SubmitActionReport';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -84,11 +77,6 @@ function App() {
 
         
         <Route 
-          path="/create-plan" 
-          element={user?.role === 'main_branch' ? <CreateAnnualPlan user={user} onLogout={handleLogout} /> : <Navigate to="/" />} 
-        />
-        
-        <Route 
           path="/create-amharic-plan" 
           element={user?.role === 'main_branch' ? <CreateAmharicPlan user={user} onLogout={handleLogout} /> : <Navigate to="/" />} 
         />
@@ -111,36 +99,6 @@ function App() {
         <Route 
           path="/submit-amharic-report/:planId" 
           element={user?.role === 'branch_user' ? <SubmitAmharicReport user={user} onLogout={handleLogout} /> : <Navigate to="/" />} 
-        />
-        
-        <Route 
-          path="/plan/:id" 
-          element={user ? <ViewAnnualPlan user={user} onLogout={handleLogout} /> : <Navigate to="/login" />} 
-        />
-        
-        <Route 
-          path="/submit-report/:reportId" 
-          element={user?.role === 'branch_user' ? <SubmitReport user={user} onLogout={handleLogout} /> : <Navigate to="/" />} 
-        />
-        
-        <Route 
-          path="/comparison/:planId" 
-          element={user?.role === 'main_branch' ? <BranchComparison user={user} onLogout={handleLogout} /> : <Navigate to="/" />} 
-        />
-        
-        <Route 
-          path="/create-actions/:planId" 
-          element={user?.role === 'main_branch' ? <CreateActions user={user} onLogout={handleLogout} /> : <Navigate to="/" />} 
-        />
-        
-        <Route 
-          path="/action-reports" 
-          element={user?.role === 'branch_user' ? <ActionReports user={user} onLogout={handleLogout} /> : <Navigate to="/" />} 
-        />
-        
-        <Route 
-          path="/submit-action/:reportId" 
-          element={user?.role === 'branch_user' ? <SubmitActionReport user={user} onLogout={handleLogout} /> : <Navigate to="/" />} 
         />
       </Routes>
     </BrowserRouter>
