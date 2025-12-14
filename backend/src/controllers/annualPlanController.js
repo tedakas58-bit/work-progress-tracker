@@ -281,7 +281,22 @@ export const submitAmharicActivityReports = async (req, res) => {
     await client.query('BEGIN');
     
     const { planId } = req.params;
+    
+    // Validate request body and reports array
+    if (!req.body || typeof req.body !== 'object') {
+      return res.status(400).json({ error: 'Invalid request body' });
+    }
+    
     const { reports } = req.body; // Array of { activityId, achieved_number, notes_amharic }
+    
+    if (!reports || !Array.isArray(reports)) {
+      return res.status(400).json({ error: 'Reports array is required' });
+    }
+    
+    if (reports.length === 0) {
+      return res.status(400).json({ error: 'Reports array cannot be empty' });
+    }
+    
     const userId = req.user.id;
     
     // Get current month period for this plan
@@ -301,8 +316,24 @@ export const submitAmharicActivityReports = async (req, res) => {
     
     // Submit reports for each activity
     for (const report of reports) {
+      // Validate each report object
+      if (!report || typeof report !== 'object') {
+        console.warn('Invalid report object:', report);
+        continue; // Skip invalid reports
+      }
+      
       const { activityId, achieved_number, notes_amharic } = report;
-      const achievement_percentage = await calculateActivityPercentage(client, activityId, achieved_number);
+      
+      // Validate required fields
+      if (!activityId) {
+        console.warn('Missing activityId in report:', report);
+        continue; // Skip reports without activityId
+      }
+      
+      const safeAchievedNumber = Number(achieved_number) || 0;
+      const safeNotesAmharic = notes_amharic || '';
+      
+      const achievement_percentage = await calculateActivityPercentage(client, activityId, safeAchievedNumber);
       
       // Check if report already exists
       const existingReport = await client.query(
@@ -318,7 +349,7 @@ export const submitAmharicActivityReports = async (req, res) => {
            SET achieved_number = $1, achievement_percentage = $2, notes_amharic = $3, 
                status = 'submitted', submitted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
            WHERE id = $4`,
-          [achieved_number, achievement_percentage, notes_amharic, existingReport.rows[0].id]
+          [safeAchievedNumber, achievement_percentage, safeNotesAmharic, existingReport.rows[0].id]
         );
       } else {
         // Create new report
@@ -327,7 +358,7 @@ export const submitAmharicActivityReports = async (req, res) => {
                                        achieved_number, achievement_percentage, notes_amharic, 
                                        status, submitted_at) 
            VALUES ($1, $2, $3, $4, $5, $6, 'submitted', CURRENT_TIMESTAMP)`,
-          [activityId, monthlyPeriodId, userId, achieved_number, achievement_percentage, notes_amharic]
+          [activityId, monthlyPeriodId, userId, safeAchievedNumber, achievement_percentage, safeNotesAmharic]
         );
       }
     }
@@ -398,6 +429,7 @@ export const getAllAmharicActivityReports = async (req, res) => {
     // Get reports for current month (December = 12), grouped by branch
     const currentMonth = new Date().getMonth() + 1; // December = 12
     
+    console.log('=== BACKEND: getAllAmharicActivityReports v2 ===');
     console.log('Filtering for month:', currentMonth, 'year:', currentYear);
     
     const result = await pool.query(
@@ -432,10 +464,21 @@ export const getAllAmharicActivityReports = async (req, res) => {
       [currentMonth, currentYear]
     );
     
-    res.json(result.rows);
+    console.log('=== BACKEND: Query result ===');
+    console.log('Total rows returned:', result.rows.length);
+    console.log('Sample data:', result.rows.length > 0 ? result.rows[0] : 'No data');
+    console.log('=== END BACKEND DEBUG ===');
+    
+    // Ensure we always return an array, even if empty
+    const safeResult = Array.isArray(result.rows) ? result.rows : [];
+    
+    res.json(safeResult);
   } catch (error) {
     console.error('Get all Amharic activity reports error:', error);
-    res.status(500).json({ error: 'Failed to get all activity reports' });
+    console.error('Error stack:', error.stack);
+    
+    // Always return an array, even on error
+    res.status(500).json([]);
   }
 };
 
