@@ -135,3 +135,82 @@ export const getAnnualPlanById = async (req, res) => {
     res.status(500).json({ error: 'Failed to get annual plan' });
   }
 };
+
+// Create new Amharic structured plan
+export const createAmharicPlan = async (req, res) => {
+  const client = await pool.connect();
+  
+  try {
+    await client.query('BEGIN');
+    
+    const { title, title_amharic, description_amharic, year, plan_type, activities } = req.body;
+    
+    // Create the annual plan with Amharic fields
+    const planResult = await client.query(
+      `INSERT INTO annual_plans (title, plan_title_amharic, plan_description_amharic, year, plan_type, created_by) 
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [title, title_amharic, description_amharic, year, plan_type || 'amharic_structured', req.user.id]
+    );
+
+    const plan = planResult.rows[0];
+
+    // Create plan activities
+    const createdActivities = [];
+    for (let i = 0; i < activities.length; i++) {
+      const activity = activities[i];
+      const activityResult = await client.query(
+        `INSERT INTO plan_activities (annual_plan_id, activity_number, activity_title_amharic, target_number, target_unit_amharic, sort_order) 
+         VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+        [plan.id, activity.activity_number, activity.activity_title_amharic, activity.target_number, activity.target_unit_amharic, i]
+      );
+      createdActivities.push(activityResult.rows[0]);
+    }
+
+    // Auto-generate 12 monthly periods
+    for (let month = 1; month <= 12; month++) {
+      const deadline = new Date(year, month - 1, 18);
+      
+      await client.query(
+        `INSERT INTO monthly_periods (annual_plan_id, month, year, deadline) 
+         VALUES ($1, $2, $3, $4)`,
+        [plan.id, month, year, deadline]
+      );
+    }
+
+    // Create activity reports for all branch users for each activity and period
+    const branchUsers = await client.query(
+      "SELECT id FROM users WHERE role = 'branch_user'"
+    );
+
+    const monthlyPeriods = await client.query(
+      `SELECT id FROM monthly_periods WHERE annual_plan_id = $1`,
+      [plan.id]
+    );
+
+    for (const period of monthlyPeriods.rows) {
+      for (const activity of createdActivities) {
+        for (const user of branchUsers.rows) {
+          await client.query(
+            `INSERT INTO activity_reports (plan_activity_id, monthly_period_id, branch_user_id, achieved_number, achievement_percentage) 
+             VALUES ($1, $2, $3, $4, $5)`,
+            [activity.id, period.id, user.id, 0, 0]
+          );
+        }
+      }
+    }
+
+    await client.query('COMMIT');
+
+    res.status(201).json({
+      message: 'Amharic structured plan created successfully',
+      plan,
+      activities: createdActivities
+    });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Create Amharic plan error:', error);
+    res.status(500).json({ error: 'Failed to create Amharic plan' });
+  } finally {
+    client.release();
+  }
+};

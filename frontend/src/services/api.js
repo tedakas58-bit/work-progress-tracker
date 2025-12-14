@@ -28,6 +28,7 @@ export const twoFactorAPI = {
 
 export const annualPlanAPI = {
   create: (data) => api.post('/annual-plans', data),
+  createAmharicPlan: (data) => api.post('/annual-plans/amharic', data),
   getAll: () => api.get('/annual-plans'),
   getById: (id) => api.get(`/annual-plans/${id}`),
 };
