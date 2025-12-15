@@ -474,13 +474,16 @@ function MainBranchDashboard({ user, onLogout }) {
                   </div>
                   <div>
                     <h2 className="text-2xl font-bold text-white">{t('የአማርኛ እቅዶች አጠቃላይ እይታ', 'Amharic Plans Overview')}</h2>
-                    <p className="text-purple-200">
+                    <div className="text-purple-200">
                       {currentAmharicPlan ? (
-                        <span style={{ fontFamily: "'Noto Sans Ethiopic', sans-serif" }}>
-                          {currentAmharicPlan.plan_title_amharic || currentAmharicPlan.title}
-                        </span>
+                        <div>
+                          <div className="text-sm text-purple-300 mb-1">{t('ግብ', 'Goal')}</div>
+                          <span style={{ fontFamily: "'Noto Sans Ethiopic', sans-serif" }}>
+                            {currentAmharicPlan.plan_title_amharic || currentAmharicPlan.title}
+                          </span>
+                        </div>
                       ) : t('የአማርኛ እቅዶች ሁኔታ', 'Amharic Plans Status')}
-                    </p>
+                    </div>
                   </div>
                 </div>
                 <div className="px-4 py-2 bg-green-500/20 border border-green-400/30 rounded-xl">
