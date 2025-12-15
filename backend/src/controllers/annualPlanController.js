@@ -421,30 +421,29 @@ export const getAmharicActivityReports = async (req, res) => {
 // Get all Amharic activity reports for main branch (to view all branch submissions)
 export const getAllAmharicActivityReports = async (req, res) => {
   try {
-    // Get current Ethiopian month (Tahsas = month 4 in Ethiopian calendar)
-    // For now, we'll use month 4 (Tahsas) - you can adjust this based on your Ethiopian calendar logic
-    const tahsasMonth = 4;
     const currentYear = new Date().getFullYear();
-    
-    // Get reports for current month (December = 12), grouped by branch
     const currentMonth = new Date().getMonth() + 1; // December = 12
     
-    console.log('=== BACKEND: getAllAmharicActivityReports v2 ===');
+    console.log('=== BACKEND: getAllAmharicActivityReports v3 ===');
     console.log('Filtering for month:', currentMonth, 'year:', currentYear);
     
-    const result = await pool.query(
+    // First, try to get Amharic activity reports
+    const activityReportsResult = await pool.query(
       `SELECT 
          u.branch_name,
          u.username,
+         ap.id as plan_id,
          ap.title as plan_title,
          ap.plan_title_amharic,
+         ap.plan_month as month,
+         ap.year,
          json_agg(
            json_build_object(
              'activity_number', pa.activity_number,
              'activity_title_amharic', pa.activity_title_amharic,
              'target_number', pa.target_number,
              'target_unit_amharic', pa.target_unit_amharic,
-             'achieved_number', ar.achieved_number,
+             'actual_achievement', ar.achieved_number,
              'achievement_percentage', ar.achievement_percentage,
              'status', ar.status,
              'notes_amharic', ar.notes_amharic,
@@ -459,20 +458,80 @@ export const getAllAmharicActivityReports = async (req, res) => {
        WHERE ap.plan_type = 'amharic_structured'
          AND mp.month = $1
          AND mp.year = $2
-       GROUP BY u.branch_name, u.username, ap.title, ap.plan_title_amharic
+       GROUP BY u.branch_name, u.username, ap.id, ap.title, ap.plan_title_amharic, ap.plan_month, ap.year
        ORDER BY u.branch_name`,
       [currentMonth, currentYear]
     );
     
-    console.log('=== BACKEND: Query result ===');
-    console.log('Total rows returned:', result.rows.length);
-    console.log('Sample data:', result.rows.length > 0 ? result.rows[0] : 'No data');
-    console.log('=== END BACKEND DEBUG ===');
+    console.log('Activity reports found:', activityReportsResult.rows.length);
     
-    // Ensure we always return an array, even if empty
-    const safeResult = Array.isArray(result.rows) ? result.rows : [];
-    
-    res.json(safeResult);
+    // If no activity reports found, check for regular monthly reports that could be converted
+    if (activityReportsResult.rows.length === 0) {
+      console.log('No activity reports found, checking for regular monthly reports...');
+      
+      const monthlyReportsResult = await pool.query(
+        `SELECT 
+           u.branch_name,
+           u.username,
+           mp.id as plan_id,
+           mp.title as plan_title,
+           mp.title as plan_title_amharic,
+           mp.month,
+           mp.year,
+           json_agg(
+             json_build_object(
+               'activity_number', '1.0',
+               'activity_title_amharic', 'የወርሃዊ ዒላማ ተግባር',
+               'target_number', mr.target_amount,
+               'target_unit_amharic', 'ብር',
+               'actual_achievement', mr.achieved_amount,
+               'achievement_percentage', mr.progress_percentage,
+               'status', mr.status,
+               'notes_amharic', mr.notes,
+               'submitted_at', mr.submitted_at
+             )
+           ) as activities
+         FROM monthly_reports mr
+         JOIN monthly_plans mp ON mr.monthly_plan_id = mp.id
+         JOIN users u ON mr.branch_user_id = u.id
+         WHERE mp.month = $1
+           AND mp.year = $2
+           AND mr.status IN ('submitted', 'late')
+         GROUP BY u.branch_name, u.username, mp.id, mp.title, mp.month, mp.year
+         ORDER BY u.branch_name`,
+        [currentMonth, currentYear]
+      );
+      
+      console.log('Monthly reports found:', monthlyReportsResult.rows.length);
+      
+      // Transform monthly reports to look like activity reports
+      const transformedReports = monthlyReportsResult.rows.map(report => ({
+        ...report,
+        activities: report.activities.map(activity => ({
+          ...activity,
+          // Flatten the structure to match expected format
+          activity_number: activity.activity_number,
+          activity_title_amharic: activity.activity_title_amharic,
+          target_number: activity.target_number,
+          target_unit_amharic: activity.target_unit_amharic,
+          actual_achievement: activity.actual_achievement,
+          achievement_percentage: activity.achievement_percentage,
+          status: activity.status,
+          notes_amharic: activity.notes_amharic,
+          submitted_at: activity.submitted_at
+        }))
+      }));
+      
+      console.log('=== BACKEND: Returning transformed monthly reports ===');
+      console.log('Total transformed reports:', transformedReports.length);
+      
+      res.json(transformedReports);
+    } else {
+      console.log('=== BACKEND: Returning activity reports ===');
+      console.log('Total activity reports:', activityReportsResult.rows.length);
+      
+      res.json(activityReportsResult.rows);
+    }
   } catch (error) {
     console.error('Get all Amharic activity reports error:', error);
     console.error('Error stack:', error.stack);

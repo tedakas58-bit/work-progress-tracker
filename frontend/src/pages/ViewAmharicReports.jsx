@@ -45,7 +45,25 @@ function ViewAmharicReports({ user, onLogout }) {
             reports: []
           };
         }
-        grouped[key].reports.push(report);
+        
+        // Handle both activity reports (with activities array) and flattened monthly reports
+        if (report.activities && Array.isArray(report.activities)) {
+          // This is an activity report with multiple activities
+          report.activities.forEach(activity => {
+            grouped[key].reports.push({
+              ...report,
+              ...activity,
+              activity_number: activity.activity_number,
+              activity_title_amharic: activity.activity_title_amharic,
+              actual_achievement: activity.actual_achievement,
+              achievement_percentage: activity.achievement_percentage,
+              status: activity.status
+            });
+          });
+        } else {
+          // This is a flattened monthly report
+          grouped[key].reports.push(report);
+        }
       });
       
       setGroupedReports(grouped);
