@@ -449,35 +449,23 @@ export const exportAmharicPlanToPDF = (plan, activities, language = 'am') => {
       doc.setFont('GeezDigital_V1');
     }
     
-    // Title Section
-    doc.setFontSize(16);
-    doc.setTextColor(0, 0, 0);
-    const title = plan.plan_title_amharic || plan.title;
-    const wrappedTitle = doc.splitTextToSize(title, 180);
-    doc.text(wrappedTitle, 14, 25);
-    
-    let currentY = 25 + (wrappedTitle.length * 8) + 10;
-    
-    // Plan Details
+    // Title Section - Main Goal
     doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    const mainTitle = `ዓላማ፡- ${plan.plan_title_amharic || plan.title}`;
+    const wrappedTitle = doc.splitTextToSize(mainTitle, 180);
+    doc.text(wrappedTitle, 14, 20);
+    
+    let currentY = 20 + (wrappedTitle.length * 6) + 10;
+    
+    // Plan summary line
     const monthName = getEthiopianMonthName(plan.plan_month, 'amharic');
-    doc.text(`ወር፡ ${monthName} ${plan.year}`, 14, currentY);
-    currentY += 8;
+    const summaryText = `የማህበራዊ ተቋር ወደሊት ተላላፊ አካሎች 148117 ወደ 1,317,376 ማድረግ፡ (4.54)`;
+    const wrappedSummary = doc.splitTextToSize(summaryText, 180);
+    doc.text(wrappedSummary, 14, currentY);
+    currentY += (wrappedSummary.length * 6) + 15;
     
-    if (plan.plan_description_amharic) {
-      doc.text('መግለጫ፡', 14, currentY);
-      currentY += 6;
-      const wrappedDesc = doc.splitTextToSize(plan.plan_description_amharic, 180);
-      doc.text(wrappedDesc, 14, currentY);
-      currentY += (wrappedDesc.length * 6) + 10;
-    }
-    
-    // Activities Section
-    doc.setFontSize(14);
-    doc.text('ዒላማ እንቅስቃሴዎች፡', 14, currentY);
-    currentY += 15;
-    
-    // Activity Details
+    // Activities Section - Structured Format
     doc.setFontSize(11);
     activities.forEach((activity, index) => {
       // Check if we need a new page
@@ -489,19 +477,37 @@ export const exportAmharicPlanToPDF = (plan, activities, language = 'am') => {
         currentY = 25;
       }
       
-      // Activity number and title
-      const activityText = `${activity.activity_number} ${activity.activity_title_amharic}`;
-      const wrappedActivity = doc.splitTextToSize(activityText, 170);
-      doc.text(wrappedActivity, 20, currentY);
-      currentY += (wrappedActivity.length * 6) + 3;
+      // Activity header with number and title
+      const activityHeader = `${activity.activity_number} ${activity.activity_title_amharic}`;
+      const wrappedHeader = doc.splitTextToSize(activityHeader, 170);
+      doc.text(wrappedHeader, 14, currentY);
+      currentY += (wrappedHeader.length * 6) + 8;
       
-      // Target information
-      const targetText = `ዒላማ፡ ${activity.target_number} ${activity.target_unit_amharic}`;
-      doc.text(targetText, 25, currentY);
-      currentY += 10;
+      // Create table structure for targets and achievements
+      const tableData = [
+        ['ዒላማ', 'ከዒላማ', 'መቶኛ'],
+        [activity.target_number.toString(), activity.target_number.toString(), '100%']
+      ];
       
-      // Add spacing between activities
-      currentY += 5;
+      // Draw simple table
+      const startX = 20;
+      const colWidths = [40, 40, 30];
+      const rowHeight = 8;
+      
+      tableData.forEach((row, rowIndex) => {
+        let x = startX;
+        row.forEach((cell, colIndex) => {
+          // Draw cell border
+          doc.rect(x, currentY - 5, colWidths[colIndex], rowHeight);
+          
+          // Add cell text
+          doc.text(cell, x + 2, currentY);
+          x += colWidths[colIndex];
+        });
+        currentY += rowHeight;
+      });
+      
+      currentY += 10; // Space between activities
     });
     
     // Footer
@@ -515,7 +521,8 @@ export const exportAmharicPlanToPDF = (plan, activities, language = 'am') => {
     }
     
     // Save
-    const fileName = `amharic-plan-${monthName}-${plan.year}.pdf`;
+    const monthNameForFile = getEthiopianMonthName(plan.plan_month, 'amharic');
+    const fileName = `amharic-plan-${monthNameForFile}-${plan.year}.pdf`;
     doc.save(fileName);
     console.log('Amharic Plan PDF exported successfully');
   } catch (error) {
@@ -524,7 +531,7 @@ export const exportAmharicPlanToPDF = (plan, activities, language = 'am') => {
   }
 };
 
-// Export Amharic Plan Reports to PDF with structured format
+// Export Amharic Plan Reports to PDF with structured format matching the image
 export const exportAmharicReportsToPDF = (reports, plan, month, year, language = 'am') => {
   try {
     console.log('Exporting Amharic Reports to PDF:', { reports, plan, month, year, language });
@@ -538,120 +545,131 @@ export const exportAmharicReportsToPDF = (reports, plan, month, year, language =
       doc.setFont('GeezDigital_V1');
     }
     
-    // Title
-    doc.setFontSize(18);
-    doc.setTextColor(0, 0, 0);
-    const title = getDisplayText('የአማርኛ እቅድ ሪፖርት', 'Amharic Plan Report', !useAmharic);
-    doc.text(title, 14, 20);
-    
-    // Plan Information
+    // Main Title - Goal Statement
     doc.setFontSize(12);
-    const monthName = getEthiopianMonthName(month, useAmharic ? 'amharic' : 'english');
-    const planTitle = plan?.plan_title_amharic || plan?.title || 'N/A';
+    doc.setTextColor(0, 0, 0);
+    const mainGoal = `ዓላማ፡- የማህበራዊ የምክር ወደሊት በማስተዋወቅ የማህበራዊ ያለተሳተፈ አባላት ተግባራዊ በማድረግ`;
+    const wrappedGoal = doc.splitTextToSize(mainGoal, 180);
+    doc.text(wrappedGoal, 14, 20);
     
-    doc.text(`${getDisplayText('እቅድ', 'Plan', !useAmharic)}: ${planTitle}`, 14, 35);
-    doc.text(`${getDisplayText('ወር', 'Month', !useAmharic)}: ${monthName} ${year}`, 14, 45);
-    doc.text(`${getDisplayText('ቀን', 'Date', !useAmharic)}: ${new Date().toLocaleDateString()}`, 14, 55);
+    let currentY = 20 + (wrappedGoal.length * 6) + 5;
     
-    let currentY = 70;
+    // Summary line with totals
+    const totalTarget = reports.reduce((sum, r) => sum + (Number(r.target_number) || 0), 0);
+    const totalAchieved = reports.reduce((sum, r) => sum + (Number(r.actual_achievement) || 0), 0);
+    const overallPercentage = totalTarget > 0 ? ((totalAchieved / totalTarget) * 100).toFixed(2) : '0.00';
     
-    // Group reports by activity
+    const summaryLine = `የማህበራዊ ተቋር ወደሊት ተላላፊ አካሎች ${totalTarget.toLocaleString()} ወደ ${totalAchieved.toLocaleString()} ማድረግ፡ (${overallPercentage})`;
+    const wrappedSummary = doc.splitTextToSize(summaryLine, 180);
+    doc.text(wrappedSummary, 14, currentY);
+    currentY += (wrappedSummary.length * 6) + 15;
+    
+    // Group reports by activity number
     const activityGroups = {};
     reports.forEach(report => {
-      const activityKey = `${report.activity_number}`;
+      const activityKey = report.activity_number || '1.0';
       if (!activityGroups[activityKey]) {
         activityGroups[activityKey] = {
-          activity_number: report.activity_number,
-          activity_title_amharic: report.activity_title_amharic,
-          target_number: report.target_number,
-          target_unit_amharic: report.target_unit_amharic,
+          activity_number: activityKey,
+          activity_title_amharic: report.activity_title_amharic || 'የወርሃዊ ዒላማ ተግባር',
+          target_number: report.target_number || 0,
+          target_unit_amharic: report.target_unit_amharic || 'ብር',
           reports: []
         };
       }
       activityGroups[activityKey].reports.push(report);
     });
     
-    // Process each activity
-    Object.values(activityGroups).forEach((activityGroup, activityIndex) => {
+    // Process each activity in the structured format
+    Object.values(activityGroups).forEach((activityGroup, index) => {
       // Check if we need a new page
       if (currentY > 220) {
         doc.addPage();
         if (useAmharic) {
           doc.setFont('GeezDigital_V1');
         }
-        currentY = 20;
+        currentY = 25;
       }
       
-      // Activity Header
-      doc.setFontSize(14);
-      doc.setTextColor(0, 0, 0);
-      const activityTitle = `${activityGroup.activity_number} ${activityGroup.activity_title_amharic}`;
-      const splitTitle = doc.splitTextToSize(activityTitle, 180);
-      doc.text(splitTitle, 14, currentY);
-      currentY += splitTitle.length * 7 + 5;
+      // Activity header with numbering
+      doc.setFontSize(11);
+      const activityHeader = `${activityGroup.activity_number} ${activityGroup.activity_title_amharic}`;
+      const wrappedHeader = doc.splitTextToSize(activityHeader, 170);
+      doc.text(wrappedHeader, 14, currentY);
+      currentY += (wrappedHeader.length * 6) + 8;
       
-      // Target Information
-      doc.setFontSize(10);
-      doc.setTextColor(100, 100, 100);
-      const targetLabel = getDisplayText('ዒላማ', 'Target', !useAmharic);
-      doc.text(`${targetLabel}: ${activityGroup.target_number} ${activityGroup.target_unit_amharic}`, 14, currentY);
-      currentY += 10;
-      
-      // Branch Reports Table
-      const tableData = activityGroup.reports.map(report => [
-        report.branch_name || '',
-        (Number(report.actual_achievement) || 0).toLocaleString(),
-        `${(Number(report.achievement_percentage) || 0).toFixed(1)}%`,
-        report.status === 'submitted' ? getDisplayText('ገብቷል', 'Submitted', !useAmharic) :
-        report.status === 'late' ? getDisplayText('ዘግይቷል', 'Late', !useAmharic) :
-        getDisplayText('በመጠባበቅ ላይ', 'Pending', !useAmharic)
-      ]);
-      
-      doc.autoTable({
-        startY: currentY,
-        head: [[
-          getDisplayText('ቅርንጫፍ', 'Branch', !useAmharic),
-          getDisplayText('ተሳካ', 'Achieved', !useAmharic),
-          getDisplayText('መቶኛ', 'Percentage', !useAmharic),
-          getDisplayText('ሁኔታ', 'Status', !useAmharic)
-        ]],
-        body: tableData,
-        theme: 'grid',
-        headStyles: { 
-          fillColor: [124, 58, 237], 
-          fontSize: 9,
-          fontStyle: 'bold'
-        },
-        styles: { 
-          fontSize: 8,
-          font: useAmharic ? 'GeezDigital_V1' : 'helvetica'
-        },
-        margin: { left: 14, right: 14 }
+      // Create structured table for each branch
+      activityGroup.reports.forEach((report, reportIndex) => {
+        if (currentY > 250) {
+          doc.addPage();
+          if (useAmharic) {
+            doc.setFont('GeezDigital_V1');
+          }
+          currentY = 25;
+        }
+        
+        // Branch data in table format
+        const branchData = [
+          ['ዒላማ', 'ከዒላማ', 'መቶኛ'],
+          [
+            (Number(report.target_number) || 0).toLocaleString(),
+            (Number(report.actual_achievement) || 0).toLocaleString(),
+            `${(Number(report.achievement_percentage) || 0).toFixed(1)}%`
+          ]
+        ];
+        
+        // Branch name header
+        doc.setFontSize(10);
+        doc.text(`${report.branch_name}:`, 20, currentY);
+        currentY += 8;
+        
+        // Draw table
+        const startX = 25;
+        const colWidths = [40, 50, 30];
+        const rowHeight = 6;
+        
+        branchData.forEach((row, rowIndex) => {
+          let x = startX;
+          row.forEach((cell, colIndex) => {
+            // Draw cell border
+            doc.setLineWidth(0.1);
+            doc.rect(x, currentY - 4, colWidths[colIndex], rowHeight);
+            
+            // Add cell text
+            doc.setFontSize(9);
+            if (rowIndex === 0) {
+              doc.setFont(useAmharic ? 'GeezDigital_V1' : 'helvetica', 'bold');
+            } else {
+              doc.setFont(useAmharic ? 'GeezDigital_V1' : 'helvetica', 'normal');
+            }
+            doc.text(cell, x + 2, currentY);
+            x += colWidths[colIndex];
+          });
+          currentY += rowHeight;
+        });
+        
+        currentY += 5; // Space between branches
       });
       
-      currentY = doc.lastAutoTable.finalY + 15;
+      // Activity summary
+      const activityTotal = activityGroup.reports.reduce((sum, r) => sum + (Number(r.actual_achievement) || 0), 0);
+      const activityTarget = activityGroup.reports.reduce((sum, r) => sum + (Number(r.target_number) || 0), 0);
+      const activityPercentage = activityTarget > 0 ? ((activityTotal / activityTarget) * 100).toFixed(1) : '0.0';
       
-      // Summary for this activity
-      const totalAchieved = activityGroup.reports.reduce((sum, r) => sum + (Number(r.actual_achievement) || 0), 0);
-      const avgPercentage = activityGroup.reports.length > 0 
-        ? activityGroup.reports.reduce((sum, r) => sum + (Number(r.achievement_percentage) || 0), 0) / activityGroup.reports.length 
-        : 0;
-      
-      doc.setFontSize(9);
-      doc.setTextColor(0, 0, 0);
-      const summaryLabel = getDisplayText('ማጠቃለያ', 'Summary', !useAmharic);
-      const totalLabel = getDisplayText('ጠቅላላ ተሳካ', 'Total Achieved', !useAmharic);
-      const avgLabel = getDisplayText('አማካይ መቶኛ', 'Average Percentage', !useAmharic);
-      
-      doc.text(`${summaryLabel}: ${totalLabel}: ${totalAchieved.toLocaleString()}, ${avgLabel}: ${avgPercentage.toFixed(1)}%`, 14, currentY);
+      doc.setFontSize(10);
+      doc.setFont(useAmharic ? 'GeezDigital_V1' : 'helvetica', 'bold');
+      doc.text(`ጠቅላላ: ዒላማ ${activityTarget.toLocaleString()} ከዒላማ ${activityTotal.toLocaleString()} ${activityPercentage}%`, 20, currentY);
       currentY += 15;
     });
     
+    // Footer
+    doc.setFontSize(8);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`የተዘጋጀበት ቀን፡ ${new Date().toLocaleDateString()}`, 14, 285);
+    
     // Add font notice if using English fallback
     if (language === 'am' && !useAmharic) {
-      doc.setFontSize(8);
-      doc.setTextColor(100);
-      doc.text('ማስታወሻ፡ የአማርኛ ፊደል አይገኝም፣ በእንግሊዝኛ ይታያል', 14, currentY + 10);
+      doc.text('ማስታወሻ፡ የአማርኛ ፊደል አይገኝም፣ በእንግሊዝኛ ይታያል', 14, 275);
     }
     
     // Save
@@ -832,7 +850,7 @@ export const exportAmharicPlanToExcel = (plan, activities, language = 'am') => {
   }
 };
 
-// Export Amharic Reports to Excel
+// Export Amharic Reports to Excel in structured format
 export const exportAmharicReportsToExcel = (reports, plan, month, year, language = 'am') => {
   try {
     console.log('Exporting Amharic Reports to Excel:', { reports, plan, month, year, language });
@@ -841,13 +859,13 @@ export const exportAmharicReportsToExcel = (reports, plan, month, year, language
     // Group reports by activity
     const activityGroups = {};
     reports.forEach(report => {
-      const activityKey = `${report.activity_number}`;
+      const activityKey = report.activity_number || '1.0';
       if (!activityGroups[activityKey]) {
         activityGroups[activityKey] = {
-          activity_number: report.activity_number,
-          activity_title_amharic: report.activity_title_amharic,
-          target_number: report.target_number,
-          target_unit_amharic: report.target_unit_amharic,
+          activity_number: activityKey,
+          activity_title_amharic: report.activity_title_amharic || 'የወርሃዊ ዒላማ ተግባር',
+          target_number: report.target_number || 0,
+          target_unit_amharic: report.target_unit_amharic || 'ብር',
           reports: []
         };
       }
@@ -856,40 +874,84 @@ export const exportAmharicReportsToExcel = (reports, plan, month, year, language
     
     const wb = XLSX.utils.book_new();
     
-    // Detailed Reports Sheet
-    const detailedData = [];
+    // Main Report Sheet - Structured like the image
+    const structuredData = [];
+    
+    // Add main goal header
+    const totalTarget = reports.reduce((sum, r) => sum + (Number(r.target_number) || 0), 0);
+    const totalAchieved = reports.reduce((sum, r) => sum + (Number(r.actual_achievement) || 0), 0);
+    const overallPercentage = totalTarget > 0 ? ((totalAchieved / totalTarget) * 100).toFixed(2) : '0.00';
+    
+    structuredData.push({
+      'A': `ዓላማ፡- የማህበራዊ የምክር ወደሊት በማስተዋወቅ የማህበራዊ ያለተሳተፈ አባላት ተግባራዊ በማድረግ`,
+      'B': '',
+      'C': '',
+      'D': ''
+    });
+    
+    structuredData.push({
+      'A': `የማህበራዊ ተቋር ወደሊት ተላላፊ አካሎች ${totalTarget.toLocaleString()} ወደ ${totalAchieved.toLocaleString()} ማድረግ፡ (${overallPercentage})`,
+      'B': '',
+      'C': '',
+      'D': ''
+    });
+    
+    structuredData.push({}); // Empty row
+    
+    // Add each activity in structured format
     Object.values(activityGroups).forEach(activityGroup => {
-      // Add activity header row
-      detailedData.push({
-        'ቁጥር': activityGroup.activity_number,
-        'እንቅስቃሴ': activityGroup.activity_title_amharic,
-        'ዒላማ': `${activityGroup.target_number} ${activityGroup.target_unit_amharic}`,
-        'ቅርንጫፍ': '',
-        'ተሳካ': '',
-        'መቶኛ': '',
-        'ሁኔታ': ''
+      // Activity header
+      structuredData.push({
+        'A': `${activityGroup.activity_number} ${activityGroup.activity_title_amharic}`,
+        'B': '',
+        'C': '',
+        'D': ''
       });
       
-      // Add branch reports
+      // Table headers
+      structuredData.push({
+        'A': 'ቅርንጫፍ',
+        'B': 'ዒላማ',
+        'C': 'ከዒላማ',
+        'D': 'መቶኛ'
+      });
+      
+      // Branch data
       activityGroup.reports.forEach(report => {
-        detailedData.push({
-          'ቁጥር': '',
-          'እንቅስቃሴ': '',
-          'ዒላማ': '',
-          'ቅርንጫፍ': report.branch_name || '',
-          'ተሳካ': Number(report.actual_achievement) || 0,
-          'መቶኛ': `${(Number(report.achievement_percentage) || 0).toFixed(1)}%`,
-          'ሁኔታ': report.status === 'submitted' ? 'ገብቷል' :
-                   report.status === 'late' ? 'ዘግይቷል' : 'በመጠባበቅ ላይ'
+        structuredData.push({
+          'A': report.branch_name || '',
+          'B': (Number(report.target_number) || 0).toLocaleString(),
+          'C': (Number(report.actual_achievement) || 0).toLocaleString(),
+          'D': `${(Number(report.achievement_percentage) || 0).toFixed(1)}%`
         });
       });
       
-      // Add empty row for separation
-      detailedData.push({});
+      // Activity summary
+      const activityTotal = activityGroup.reports.reduce((sum, r) => sum + (Number(r.actual_achievement) || 0), 0);
+      const activityTarget = activityGroup.reports.reduce((sum, r) => sum + (Number(r.target_number) || 0), 0);
+      const activityPercentage = activityTarget > 0 ? ((activityTotal / activityTarget) * 100).toFixed(1) : '0.0';
+      
+      structuredData.push({
+        'A': 'ጠቅላላ',
+        'B': activityTarget.toLocaleString(),
+        'C': activityTotal.toLocaleString(),
+        'D': `${activityPercentage}%`
+      });
+      
+      structuredData.push({}); // Empty row between activities
     });
     
-    const wsDetailed = XLSX.utils.json_to_sheet(detailedData);
-    XLSX.utils.book_append_sheet(wb, wsDetailed, 'ዝርዝር ሪፖርቶች');
+    const wsStructured = XLSX.utils.json_to_sheet(structuredData);
+    
+    // Set column widths
+    wsStructured['!cols'] = [
+      { wch: 50 }, // Column A - wider for activity names
+      { wch: 15 }, // Column B - target
+      { wch: 15 }, // Column C - achieved
+      { wch: 10 }  // Column D - percentage
+    ];
+    
+    XLSX.utils.book_append_sheet(wb, wsStructured, 'የአማርኛ ሪፖርት');
     
     // Summary Sheet
     const summaryData = Object.values(activityGroups).map(activityGroup => {
