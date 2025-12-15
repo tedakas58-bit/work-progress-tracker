@@ -751,6 +751,8 @@ function MainBranchDashboard({ user, onLogout }) {
               ) : (
                 <div className="space-y-4 p-6">
                   {allReports.map((branchReport, index) => {
+                    console.log(`Rendering branch report ${index}:`, branchReport);
+                    
                     if (!branchReport.activities || !Array.isArray(branchReport.activities)) {
                       console.warn('Invalid branchReport structure in render:', branchReport);
                       return null;
@@ -776,8 +778,13 @@ function MainBranchDashboard({ user, onLogout }) {
                       {/* Activities Summary */}
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                         {branchReport.activities.map((activity, actIndex) => {
-                          const progressPercentage = activity.target_number > 0 ? 
-                            Math.round((activity.achieved_number / activity.target_number) * 100) : 0;
+                          // Use the correct field names from backend
+                          const achieved = Number(activity.actual_achievement || activity.achieved_number) || 0;
+                          const target = Number(activity.target_number) || 0;
+                          const progressPercentage = activity.achievement_percentage || 
+                            (target > 0 ? Math.round((achieved / target) * 100) : 0);
+                          
+                          console.log(`Activity ${activity.activity_number}: achieved=${achieved}, target=${target}, progress=${progressPercentage}%, status=${activity.status}`);
                           
                           return (
                             <div key={`${activity.activity_number}-${actIndex}`} 
@@ -796,11 +803,11 @@ function MainBranchDashboard({ user, onLogout }) {
                               
                               <div className="text-sm text-white mb-2">
                                 <span className="text-green-300 font-semibold">
-                                  {activity.achieved_number?.toLocaleString()}
+                                  {achieved?.toLocaleString()}
                                 </span>
                                 <span className="text-purple-200 mx-1">/</span>
                                 <span className="text-blue-300">
-                                  {activity.target_number?.toLocaleString()}
+                                  {target?.toLocaleString()}
                                 </span>
                                 <span className="text-purple-200 text-xs ml-1">
                                   {activity.target_unit_amharic}
