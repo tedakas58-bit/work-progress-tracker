@@ -28,7 +28,7 @@ function AmharicPlanReports({ user, onLogout }) {
 
   const fetchAmharicPlans = async () => {
     try {
-      // Fetch all Amharic plans that this branch user needs to report on
+      // Fetch all Amharic plans that this woreda user needs to report on
       const response = await annualPlanAPI.getAll();
       const amharicPlansOnly = response.data.filter(plan => plan.plan_type === 'amharic_structured');
       setAmharicPlans(amharicPlansOnly);

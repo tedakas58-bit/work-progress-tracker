@@ -25,6 +25,10 @@ export const translations = {
     success: 'ተሳክቷል',
     warning: 'ማስጠንቀቂያ',
     info: 'መረጃ',
+    branch: 'ወረዳ',
+    mainBranch: 'ክፍለ ከተማ',
+    woreda: 'ወረዳ',
+    subcity: 'ክፍለ ከተማ',
   },
 
   // Authentication
@@ -44,8 +48,10 @@ export const translations = {
 
   // Dashboard
   dashboard: {
-    mainBranch: 'ዋና ቅርንጫፍ ዳሽቦርድ',
-    branch: 'ቅርንጫፍ ዳሽቦርድ',
+    mainBranch: 'ክፍለ ከተማ ዳሽቦርድ',
+    branch: 'ወረዳ ዳሽቦርድ',
+    subcity: 'ክፍለ ከተማ ዳሽቦርድ',
+    woreda: 'ወረዳ ዳሽቦርድ',
     welcome: 'እንኳን ደህና መጡ',
     overview: 'አጠቃላይ እይታ',
     statistics: 'ስታቲስቲክስ',
@@ -164,6 +170,17 @@ export const translations = {
     profile: 'መገለጫ',
     help: 'እገዛ',
     logout: 'ውጣ',
+  },
+
+  // Administrative Terms
+  admin: {
+    subcity: 'ክፍለ ከተማ',
+    woreda: 'ወረዳ',
+    subcityDashboard: 'ክፍለ ከተማ ዳሽቦርድ',
+    woredaDashboard: 'ወረዳ ዳሽቦርድ',
+    subcityUser: 'ክፍለ ከተማ ተጠቃሚ',
+    woredaUser: 'ወረዳ ተጠቃሚ',
+    woredaUsers: 'የወረዳ ተጠቃሚዎች',
   },
 
   // Months (Ethiopian Government Fiscal Year)

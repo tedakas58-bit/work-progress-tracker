@@ -72,9 +72,9 @@ const ContactManager = ({ users, onUserUpdate }) => {
       case 'admin':
         return 'Administrator';
       case 'main_branch':
-        return 'Main Branch';
+        return 'Sub-city';
       default:
-        return user.branch_name || 'Branch User';
+        return user.branch_name || 'Woreda User';
     }
   };
 

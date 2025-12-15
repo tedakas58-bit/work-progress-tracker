@@ -6,10 +6,13 @@ import { ArrowLeft, Download, FileText, ChevronDown, Calendar, Target, Users, Tr
 import { useLanguage } from '../contexts/LanguageContext';
 import { ETHIOPIAN_MONTHS, getEthiopianMonthName } from '../utils/ethiopianCalendar';
 import { exportAmharicReportsToPDF, exportAmharicReportsToExcel, exportAmharicReportsToWord } from '../utils/exportReports';
+import { transformBranchName } from '../utils/branchNameTransform';
 
 function ViewAmharicReports({ user, onLogout }) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const navigate = useNavigate();
+  
+
   const [allReports, setAllReports] = useState([]);
   const [groupedReports, setGroupedReports] = useState({});
   const [loading, setLoading] = useState(true);
@@ -343,7 +346,7 @@ function ViewAmharicReports({ user, onLogout }) {
                         <tbody>
                           {group.reports.map((report, index) => (
                             <tr key={index} className="border-b border-white/10 hover:bg-white/5 transition">
-                              <td className="py-3 px-4 text-sm text-white font-medium">{report.branch_name}</td>
+                              <td className="py-3 px-4 text-sm text-white font-medium">{transformBranchName(report.branch_name, language)}</td>
                               <td className="py-3 px-4 text-sm text-purple-200" style={{ fontFamily: "'Noto Sans Ethiopic', sans-serif" }}>
                                 {report.activity_number} - {report.activity_title_amharic}
                               </td>

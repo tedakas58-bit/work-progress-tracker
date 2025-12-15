@@ -62,8 +62,8 @@ const EmailManager = ({ users, onUserUpdate }) => {
                   <div className="font-medium text-gray-900">{user.username}</div>
                   <div className="text-sm text-gray-500">
                     {user.role === 'admin' ? 'Administrator' : 
-                     user.role === 'main_branch' ? 'Main Branch' : 
-                     user.branch_name || 'Branch User'}
+                     user.role === 'main_branch' ? 'Sub-city' : 
+                     user.branch_name || 'Woreda User'}
                   </div>
                 </div>
               </div>

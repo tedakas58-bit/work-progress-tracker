@@ -5,11 +5,14 @@ import Navbar from '../components/Navbar';
 import { ArrowLeft, Award, TrendingUp, TrendingDown } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useLanguage } from '../contexts/LanguageContext';
+import { transformBranchName } from '../utils/branchNameTransform';
 
 function BranchComparison({ user, onLogout }) {
   const navigate = useNavigate();
   const { planId } = useParams();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  
+
   const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -38,7 +41,7 @@ function BranchComparison({ user, onLogout }) {
   }
 
   const chartData = branches.map(branch => ({
-    name: branch.branch_name,
+    name: transformBranchName(branch.branch_name, language),
     achieved: parseFloat(branch.total_achieved || 0),
     progress: parseFloat(branch.avg_progress || 0),
   }));
@@ -71,7 +74,7 @@ function BranchComparison({ user, onLogout }) {
               <Award size={48} />
               <div>
                 <h2 className="text-2xl font-bold">{t('ከፍተኛ አፈጻጸም ያለው', 'Top Performer')}</h2>
-                <p className="text-xl">{topPerformer.branch_name}</p>
+                <p className="text-xl">{transformBranchName(topPerformer.branch_name, language)}</p>
                 <p className="text-lg opacity-90">
                   {parseFloat(topPerformer.avg_progress || 0).toFixed(1)}% {t('አማካይ እድገት', 'Average Progress')}
                 </p>
@@ -105,7 +108,7 @@ function BranchComparison({ user, onLogout }) {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('ደረጃ', 'Rank')}</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('ቅርንጫፍ', 'Branch')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('ወረዳ', 'Woreda')}</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('ጠቅላላ ሪፖርቶች', 'Total Reports')}</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('በጊዜው', 'On Time')}</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('ዘግይቷል', 'Late')}</th>
@@ -127,7 +130,7 @@ function BranchComparison({ user, onLogout }) {
                         #{index + 1}
                       </td>
                       <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                        {branch.branch_name}
+                        {transformBranchName(branch.branch_name, language)}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900">
                         {branch.total_reports}

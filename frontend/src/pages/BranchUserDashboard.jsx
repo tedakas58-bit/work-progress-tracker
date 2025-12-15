@@ -120,7 +120,7 @@ function BranchUserDashboard({ user, onLogout }) {
             <div>
               <h1 className="text-4xl font-bold text-white mb-2 flex items-center gap-3">
                 <Award className="text-yellow-400" size={32} />
-                {t('ቅርንጫፍ ዳሽቦርድ', 'Branch Dashboard')}
+                {t('ወረዳ ዳሽቦርድ', 'Woreda Dashboard')}
               </h1>
               <p className="text-purple-200">{t('የወርሃዊ ሪፖርቶችዎን ያስገቡ እና ይከታተሉ (የአሁኑን ወር ብቻ በማሳየት ላይ)', 'Submit and track your monthly reports (Showing current month only)')}</p>
             </div>
@@ -193,7 +193,7 @@ function BranchUserDashboard({ user, onLogout }) {
             </div>
             <h3 className="text-2xl font-bold text-white mb-3">{t('ምንም የአማርኛ እቅዶች የሉም', 'No Amharic Plans Available')}</h3>
             <p className="text-purple-200 max-w-md mx-auto">
-              {t('የአማርኛ እቅዶች አሁንም አልተፈጠሩም። ዋና ቅርንጫፍ የአማርኛ እቅድ ሲፈጥር እዚህ ይታያል።', 'Amharic plans have not been created yet. They will appear here when the main branch creates Amharic plans.')}
+              {t('የአማርኛ እቅዶች አሁንም አልተፈጠሩም። ክፍለ ከተማ የአማርኛ እቅድ ሲፈጥር እዚህ ይታያል።', 'Amharic plans have not been created yet. They will appear here when the sub-city creates Amharic plans.')}
             </p>
           </div>
         ) : (

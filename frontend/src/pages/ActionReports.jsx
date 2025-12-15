@@ -272,7 +272,7 @@ function ActionReports({ user, onLogout }) {
             <h3 className="text-2xl font-bold text-white mb-3">{t('ምንም የተግባር ሪፖርቶች የሉም', 'No Action Reports Available')}</h3>
             <p className="text-purple-200 max-w-md mx-auto">
               {reports.length === 0 
-                ? t('የተግባር ሪፖርቶች የሚታዩት በዋና ቅርንጫፍ ተግባራት ከተፈጠሩ በኋላ ነው', 'Action reports will appear once the main branch creates actions for annual plans')
+                ? t('የተግባር ሪፖርቶች የሚታዩት በክፍለ ከተማ ተግባራት ከተፈጠሩ በኋላ ነው', 'Action reports will appear once the sub-city creates actions for annual plans')
                 : t('በተመረጠው ወር ምንም ሪፖርቶች የሉም', 'No reports found for the selected period')
               }
             </p>

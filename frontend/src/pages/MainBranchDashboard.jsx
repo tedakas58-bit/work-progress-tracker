@@ -8,10 +8,13 @@ import { getEthiopianMonthName, formatEthiopianDeadline, getDaysUntilDeadline, g
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { calculateGrade, getGradeDescription } from '../utils/grading';
 import { exportToPDF, exportToExcel, exportToWord } from '../utils/exportReports';
+import { transformBranchName } from '../utils/branchNameTransform';
 
 function MainBranchDashboard({ user, onLogout }) {
   const { t, language } = useLanguage();
   const navigate = useNavigate();
+  
+
   
   // Version identifier for deployment tracking
   console.log('MainBranchDashboard v3.1 - Backend Validation Fix');
@@ -74,7 +77,7 @@ function MainBranchDashboard({ user, onLogout }) {
         
         // Ensure required fields exist
         const safeReport = {
-          branch_name: report.branch_name || `Branch ${index + 1}`,
+          branch_name: report.branch_name || transformBranchName(`Branch ${index + 1}`, language),
           username: report.username || 'Unknown User',
           plan_title: report.plan_title || 'Unknown Plan',
           plan_title_amharic: report.plan_title_amharic || '',
@@ -163,7 +166,7 @@ function MainBranchDashboard({ user, onLogout }) {
           }
           
           flattenedReports.push({
-            branch_name: branchReport.branch_name || 'Unknown Branch',
+            branch_name: transformBranchName(branchReport.branch_name, language) || 'Unknown Branch',
             plan_title: branchReport.plan_title || 'Unknown Plan',
             plan_title_amharic: branchReport.plan_title_amharic || '',
             activity_number: activity.activity_number || '',
@@ -238,7 +241,7 @@ function MainBranchDashboard({ user, onLogout }) {
           };
         }
         
-        const safeBranchName = branchReport.branch_name || `Branch ${index + 1}`;
+        const safeBranchName = transformBranchName(branchReport.branch_name, language) || transformBranchName(`Branch ${index + 1}`, language);
         
         if (!branchReport.activities || !Array.isArray(branchReport.activities)) {
           console.warn(`Invalid branchReport activities at index ${index}:`, branchReport);
@@ -302,7 +305,7 @@ function MainBranchDashboard({ user, onLogout }) {
           <div>
             <h1 className="text-4xl font-bold text-white mb-2 flex items-center gap-3">
               <Sparkles className="text-yellow-400" size={32} />
-              {t('ዋና ቅርንጫፍ ዳሽቦርድ', 'Main Branch Dashboard')}
+              {t('ክፍለ ከተማ ዳሽቦርድ', 'Sub-city Dashboard')}
             </h1>
             <p className="text-purple-200">{t('የወርሃዊ እቅድን ያስተዳድሩ እና በሁሉም ቅርንጫፎች ላይ እድገትን ይከታተሉ', 'Manage monthly plan and monitor progress across all branches')}</p>
           </div>
@@ -644,7 +647,7 @@ function MainBranchDashboard({ user, onLogout }) {
                             {branchReport.branch_name?.charAt(branchReport.branch_name.length - 1) || '?'}
                           </div>
                           <div>
-                            <h3 className="text-lg font-semibold text-white">{branchReport.branch_name || 'Unknown Branch'}</h3>
+                            <h3 className="text-lg font-semibold text-white">{transformBranchName(branchReport.branch_name, language) || 'Unknown Branch'}</h3>
                             <p className="text-sm text-purple-200" style={{ fontFamily: "'Noto Sans Ethiopic', sans-serif" }}>
                               {branchReport.plan_title_amharic || branchReport.plan_title || 'No Plan Title'}
                             </p>

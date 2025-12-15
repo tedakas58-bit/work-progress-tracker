@@ -54,7 +54,7 @@ function CreateAnnualPlan({ user, onLogout }) {
               {t('የዓመታዊ እቅድ ፍጠር', 'Create Annual Plan')}
             </h1>
             <p className="text-purple-200">
-              {t('ስርዓቱ በራስ-ሰር ወደ 12 ወርሃዊ ጊዜዎች ይከፍለዋል እና ለሁሉም የቅርንጫፍ ተጠቃሚዎች ሪፖርቶችን ይፈጥራል', 'The system will automatically split this into 12 monthly periods and create reports for all branch users')}
+              {t('ስርዓቱ በራስ-ሰር ወደ 12 ወርሃዊ ጊዜዎች ይከፍለዋል እና ለሁሉም የወረዳ ተጠቃሚዎች ሪፖርቶችን ይፈጥራል', 'The system will automatically split this into 12 monthly periods and create reports for all woreda users')}
             </p>
           </div>
 
@@ -140,7 +140,7 @@ function CreateAnnualPlan({ user, onLogout }) {
                 </li>
                 <li className="flex items-center gap-2">
                   <div className="w-1.5 h-1.5 bg-pink-400 rounded-full"></div>
-                  {t('ለሁሉም 10 የቅርንጫፍ ተጠቃሚዎች ሪፖርቶች ይፈጠራሉ', 'Reports will be created for all 10 branch users')}
+                  {t('ለሁሉም 10 የወረዳ ተጠቃሚዎች ሪፖርቶች ይፈጠራሉ', 'Reports will be created for all 10 woreda users')}
                 </li>
                 <li className="flex items-center gap-2">
                   <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full"></div>

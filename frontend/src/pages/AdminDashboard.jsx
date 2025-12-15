@@ -161,7 +161,7 @@ const AdminDashboard = ({ user, onLogout }) => {
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">Branch Users</dt>
+                      <dt className="text-sm font-medium text-gray-500 truncate">Woreda Users</dt>
                       <dd className="text-lg font-medium text-gray-900">{stats.overview.total_branch_users}</dd>
                     </dl>
                   </div>
@@ -373,8 +373,8 @@ const AdminDashboard = ({ user, onLogout }) => {
                   onChange={(e) => setNewUser({...newUser, role: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="branch_user">Branch User</option>
-                  <option value="main_branch">Main Branch</option>
+                  <option value="branch_user">Woreda User</option>
+                  <option value="main_branch">Sub-city</option>
                   <option value="admin">Admin</option>
                 </select>
               </div>

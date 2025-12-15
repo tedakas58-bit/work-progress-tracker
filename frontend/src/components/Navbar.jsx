@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { LogOut, BarChart3, User, Sparkles, Languages } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { transformBranchName } from '../utils/branchNameTransform';
 
 function Navbar({ user, onLogout }) {
   const { language, toggleLanguage, t } = useLanguage();
@@ -26,7 +27,9 @@ function Navbar({ user, onLogout }) {
               </div>
               <div className="text-sm">
                 <div className="font-semibold text-white flex items-center gap-1">
-                  {user.role === 'admin' ? 'System Administrator' : user.branchName}
+                  {user.role === 'admin' ? 'System Administrator' : 
+                   user.role === 'main_branch' ? t('ክፍለ ከተማ', 'Sub-city') :
+                   transformBranchName(user.branchName, language) || user.branchName}
                   {user.role === 'main_branch' && <Sparkles size={14} className="text-yellow-400" />}
                   {user.role === 'admin' && <Sparkles size={14} className="text-red-400" />}
                 </div>
