@@ -59,3 +59,45 @@ export const requireAnyRole = (...roles) => {
     next();
   };
 };
+
+// Sector-specific authorization
+export const authorizeSectorAdmin = (req, res, next) => {
+  const sectorRoles = ['organization_sector', 'information_sector', 'operation_sector', 'peace_value_sector'];
+  if (!sectorRoles.includes(req.user.role)) {
+    return res.status(403).json({ error: 'Access denied. Sector admin role required.' });
+  }
+  next();
+};
+
+// Allow main branch or sector admins
+export const authorizeMainBranchOrSector = (req, res, next) => {
+  const allowedRoles = ['main_branch', 'organization_sector', 'information_sector', 'operation_sector', 'peace_value_sector'];
+  if (!allowedRoles.includes(req.user.role)) {
+    return res.status(403).json({ error: 'Access denied. Main branch or sector admin role required.' });
+  }
+  next();
+};
+
+// Check if user can access specific sector data
+export const authorizeSectorAccess = (sector) => {
+  return (req, res, next) => {
+    // Main branch can access all sectors
+    if (req.user.role === 'main_branch') {
+      return next();
+    }
+    
+    // Sector admins can only access their own sector
+    const sectorRoleMap = {
+      'organization': 'organization_sector',
+      'information': 'information_sector', 
+      'operation': 'operation_sector',
+      'peace_value': 'peace_value_sector'
+    };
+    
+    if (req.user.role === sectorRoleMap[sector]) {
+      return next();
+    }
+    
+    return res.status(403).json({ error: 'Access denied. You can only access your own sector data.' });
+  };
+};

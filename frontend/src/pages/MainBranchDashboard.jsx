@@ -418,6 +418,7 @@ function MainBranchDashboard({ user, onLogout }) {
           </div>
           
           <div className="space-y-4">
+            {/* Main Branch - Shows all sector buttons */}
             {user.role === 'main_branch' && (
               <>
                 {/* Sector Buttons */}
@@ -474,6 +475,111 @@ function MainBranchDashboard({ user, onLogout }) {
                   </button>
                 </div>
               </>
+            )}
+
+            {/* Sector-specific interfaces */}
+            {user.role === 'organization_sector' && (
+              <div className="flex gap-3 justify-center">
+                <button
+                  onClick={() => navigate('/create-amharic-plan')}
+                  className="flex items-center space-x-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-3 rounded-xl transition transform hover:scale-105 shadow-lg"
+                >
+                  <FileText size={20} />
+                  <span className="font-semibold">{t('እቅድ ፍጠር', 'Create Plan')}</span>
+                </button>
+                <button
+                  onClick={() => navigate('/manage-amharic-plans')}
+                  className="flex items-center space-x-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-3 rounded-xl transition transform hover:scale-105 shadow-lg"
+                >
+                  <FileText size={20} />
+                  <span className="font-semibold">{t('እቅዶች አስተዳደር', 'Manage Plans')}</span>
+                </button>
+                <button
+                  onClick={() => navigate('/view-amharic-reports')}
+                  className="flex items-center space-x-2 bg-gradient-to-r from-slate-600 to-gray-600 hover:from-slate-700 hover:to-gray-700 text-white px-6 py-3 rounded-xl transition transform hover:scale-105 shadow-lg"
+                >
+                  <FileText size={20} />
+                  <span className="font-semibold">{t('ሪፖርቶች', 'Reports')}</span>
+                </button>
+              </div>
+            )}
+
+            {user.role === 'information_sector' && (
+              <div className="flex gap-3 justify-center">
+                <button
+                  onClick={() => navigate('/create-amharic-plan')}
+                  className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-6 py-3 rounded-xl transition transform hover:scale-105 shadow-lg"
+                >
+                  <FileText size={20} />
+                  <span className="font-semibold">{t('እቅድ ፍጠር', 'Create Plan')}</span>
+                </button>
+                <button
+                  onClick={() => navigate('/manage-amharic-plans')}
+                  className="flex items-center space-x-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-3 rounded-xl transition transform hover:scale-105 shadow-lg"
+                >
+                  <FileText size={20} />
+                  <span className="font-semibold">{t('እቅዶች አስተዳደር', 'Manage Plans')}</span>
+                </button>
+                <button
+                  onClick={() => navigate('/view-amharic-reports')}
+                  className="flex items-center space-x-2 bg-gradient-to-r from-slate-600 to-gray-600 hover:from-slate-700 hover:to-gray-700 text-white px-6 py-3 rounded-xl transition transform hover:scale-105 shadow-lg"
+                >
+                  <FileText size={20} />
+                  <span className="font-semibold">{t('ሪፖርቶች', 'Reports')}</span>
+                </button>
+              </div>
+            )}
+
+            {user.role === 'operation_sector' && (
+              <div className="flex gap-3 justify-center">
+                <button
+                  onClick={() => navigate('/create-amharic-plan')}
+                  className="flex items-center space-x-2 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white px-6 py-3 rounded-xl transition transform hover:scale-105 shadow-lg"
+                >
+                  <FileText size={20} />
+                  <span className="font-semibold">{t('እቅድ ፍጠር', 'Create Plan')}</span>
+                </button>
+                <button
+                  onClick={() => navigate('/manage-amharic-plans')}
+                  className="flex items-center space-x-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-3 rounded-xl transition transform hover:scale-105 shadow-lg"
+                >
+                  <FileText size={20} />
+                  <span className="font-semibold">{t('እቅዶች አስተዳደር', 'Manage Plans')}</span>
+                </button>
+                <button
+                  onClick={() => navigate('/view-amharic-reports')}
+                  className="flex items-center space-x-2 bg-gradient-to-r from-slate-600 to-gray-600 hover:from-slate-700 hover:to-gray-700 text-white px-6 py-3 rounded-xl transition transform hover:scale-105 shadow-lg"
+                >
+                  <FileText size={20} />
+                  <span className="font-semibold">{t('ሪፖርቶች', 'Reports')}</span>
+                </button>
+              </div>
+            )}
+
+            {user.role === 'peace_value_sector' && (
+              <div className="flex gap-3 justify-center">
+                <button
+                  onClick={() => navigate('/create-amharic-plan')}
+                  className="flex items-center space-x-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl transition transform hover:scale-105 shadow-lg"
+                >
+                  <FileText size={20} />
+                  <span className="font-semibold">{t('እቅድ ፍጠር', 'Create Plan')}</span>
+                </button>
+                <button
+                  onClick={() => navigate('/manage-amharic-plans')}
+                  className="flex items-center space-x-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-3 rounded-xl transition transform hover:scale-105 shadow-lg"
+                >
+                  <FileText size={20} />
+                  <span className="font-semibold">{t('እቅዶች አስተዳደር', 'Manage Plans')}</span>
+                </button>
+                <button
+                  onClick={() => navigate('/view-amharic-reports')}
+                  className="flex items-center space-x-2 bg-gradient-to-r from-slate-600 to-gray-600 hover:from-slate-700 hover:to-gray-700 text-white px-6 py-3 rounded-xl transition transform hover:scale-105 shadow-lg"
+                >
+                  <FileText size={20} />
+                  <span className="font-semibold">{t('ሪፖርቶች', 'Reports')}</span>
+                </button>
+              </div>
             )}
           </div>
         </div>

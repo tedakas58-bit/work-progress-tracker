@@ -12,21 +12,21 @@ import {
   getAmharicActivityReports,
   getAllAmharicActivityReports
 } from '../controllers/annualPlanController.js';
-import { authenticate, authorizeMainBranch } from '../middleware/auth.js';
+import { authenticate, authorizeMainBranch, authorizeMainBranchOrSector } from '../middleware/auth.js';
 
 const router = express.Router();
 
-router.post('/', authenticate, authorizeMainBranch, createAnnualPlan);
-router.post('/amharic', authenticate, authorizeMainBranch, createAmharicPlan);
-router.get('/', authenticate, getAnnualPlans);
+router.post('/', authenticate, authorizeMainBranchOrSector, createAnnualPlan);
+router.post('/amharic', authenticate, authorizeMainBranchOrSector, createAmharicPlan);
+router.get('/', authenticate, authorizeMainBranchOrSector, getAnnualPlans);
 router.get('/:id', authenticate, getAnnualPlanById);
 router.get('/:id/activities', authenticate, getPlanActivities);
 router.get('/amharic/:id/activities', authenticate, getPlanActivities);
-router.put('/amharic/:id', authenticate, authorizeMainBranch, updateAmharicPlan);
-router.delete('/amharic/:id', authenticate, authorizeMainBranch, deleteAmharicPlan);
+router.put('/amharic/:id', authenticate, authorizeMainBranchOrSector, updateAmharicPlan);
+router.delete('/amharic/:id', authenticate, authorizeMainBranchOrSector, deleteAmharicPlan);
 router.delete('/amharic/all/delete', authenticate, authorizeMainBranch, deleteAllAmharicPlans);
 router.post('/:planId/activity-reports', authenticate, submitAmharicActivityReports);
 router.get('/:planId/activity-reports', authenticate, getAmharicActivityReports);
-router.get('/activity-reports/all', authenticate, getAllAmharicActivityReports);
+router.get('/activity-reports/all', authenticate, authorizeMainBranchOrSector, getAllAmharicActivityReports);
 
 export default router;

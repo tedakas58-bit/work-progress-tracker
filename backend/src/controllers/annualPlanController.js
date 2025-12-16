@@ -83,13 +83,30 @@ export const createAnnualPlan = async (req, res) => {
 
 export const getAnnualPlans = async (req, res) => {
   try {
-    const result = await pool.query(
-      `SELECT ap.*, u.username as creator_name 
-       FROM annual_plans ap
-       LEFT JOIN users u ON ap.created_by = u.id
-       ORDER BY ap.year DESC, ap.created_at DESC`
-    );
+    let query = `SELECT ap.*, u.username as creator_name 
+                 FROM annual_plans ap
+                 LEFT JOIN users u ON ap.created_by = u.id`;
+    let params = [];
     
+    // Filter by sector for sector admins
+    if (req.user.role !== 'main_branch') {
+      const sectorMap = {
+        'organization_sector': 'organization',
+        'information_sector': 'information',
+        'operation_sector': 'operation',
+        'peace_value_sector': 'peace_value'
+      };
+      
+      const userSector = sectorMap[req.user.role];
+      if (userSector) {
+        query += ` WHERE ap.sector = $1`;
+        params.push(userSector);
+      }
+    }
+    
+    query += ` ORDER BY ap.year DESC, ap.created_at DESC`;
+    
+    const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (error) {
     console.error('Get annual plans error:', error);
@@ -568,11 +585,17 @@ export const createAmharicPlan = async (req, res) => {
     
     const { title, title_amharic, goal_amharic, description_amharic, year, month, plan_type, activities } = req.body;
     
-    // Create the annual plan with Amharic fields including goal
+    // Determine sector based on user role
+    let sector = 'organization'; // default
+    if (req.user.role === 'information_sector') sector = 'information';
+    else if (req.user.role === 'operation_sector') sector = 'operation';
+    else if (req.user.role === 'peace_value_sector') sector = 'peace_value';
+    
+    // Create the annual plan with Amharic fields including goal and sector
     const planResult = await client.query(
-      `INSERT INTO annual_plans (title, plan_title_amharic, goal_amharic, plan_description_amharic, year, plan_month, plan_type, created_by) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
-      [title, title_amharic, goal_amharic, description_amharic, year, month || 1, plan_type || 'amharic_structured', req.user.id]
+      `INSERT INTO annual_plans (title, plan_title_amharic, goal_amharic, plan_description_amharic, year, plan_month, plan_type, sector, created_by) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+      [title, title_amharic, goal_amharic, description_amharic, year, month || 1, plan_type || 'amharic_structured', sector, req.user.id]
     );
 
     const plan = planResult.rows[0];
