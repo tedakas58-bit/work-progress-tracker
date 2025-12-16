@@ -1,7 +1,20 @@
 import bcrypt from 'bcrypt';
-import pool from './backend/src/database/db.js';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
-async function createSectorUsers() {
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Import the database connection
+import('./backend/src/database/db.js').then(async (dbModule) => {
+  const pool = dbModule.default;
+  await createSectorUsers(pool);
+}).catch(err => {
+  console.error('Error importing database module:', err);
+  process.exit(1);
+});
+
+async function createSectorUsers(pool) {
   const client = await pool.connect();
   
   try {
@@ -103,5 +116,3 @@ async function createSectorUsers() {
     process.exit(0);
   }
 }
-
-createSectorUsers();
