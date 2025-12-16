@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { monthlyPlanAPI, reportAPI, annualPlanAPI } from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
+import CountdownTimer from '../components/CountdownTimer';
 import { Calendar, TrendingUp, Users, Sparkles, Target, RefreshCw, BarChart3, Download, Award, FileText } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { getEthiopianMonthName, formatEthiopianDeadline, getDaysUntilDeadline, getCurrentEthiopianDate } from '../utils/ethiopianCalendar';
@@ -582,6 +583,11 @@ function MainBranchDashboard({ user, onLogout }) {
               </div>
             )}
           </div>
+        </div>
+
+        {/* Countdown Timer for All Users */}
+        <div className="mb-8 animate-fade-in">
+          <CountdownTimer size="normal" animated={true} />
         </div>
 
         {loading ? (

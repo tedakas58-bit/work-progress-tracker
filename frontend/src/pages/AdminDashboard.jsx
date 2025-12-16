@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import api, { adminAPI } from '../services/api';
 import Navbar from '../components/Navbar';
 import ContactManager from '../components/ContactManager';
+import CountdownTimer from '../components/CountdownTimer';
 
 const AdminDashboard = ({ user, onLogout }) => {
   const navigate = useNavigate();
@@ -124,6 +125,11 @@ const AdminDashboard = ({ user, onLogout }) => {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
           <p className="mt-2 text-gray-600">Manage users and monitor system activity</p>
+        </div>
+
+        {/* Countdown Timer for Admin */}
+        <div className="mb-8">
+          <CountdownTimer size="normal" animated={true} />
         </div>
 
         {error && (

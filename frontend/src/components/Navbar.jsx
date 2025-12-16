@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { LogOut, BarChart3, User, Sparkles, Languages } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { transformBranchName } from '../utils/branchNameTransform';
+import NavbarCountdown from './NavbarCountdown';
 
 function Navbar({ user, onLogout }) {
   const { language, toggleLanguage, t } = useLanguage();

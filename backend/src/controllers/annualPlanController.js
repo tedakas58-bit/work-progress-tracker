@@ -1,4 +1,5 @@
 import pool from '../database/db.js';
+import { calculateEthiopianDeadline } from '../utils/ethiopianDeadlines.js';
 
 export const createAnnualPlan = async (req, res) => {
   const client = await pool.connect();
@@ -22,9 +23,9 @@ export const createAnnualPlan = async (req, res) => {
     const monthlyUnits = 0;
     
     for (let month = 1; month <= 12; month++) {
-      // Ethiopian calendar: deadline is 18th of each month
-      // Ethiopian months have 30 days each (except the 13th month)
-      const deadline = new Date(year, month - 1, 18); // 18th day of each month
+      // Ethiopian calendar: deadline is 18th of each Ethiopian month
+      // Calculate proper Ethiopian calendar deadline (18th day of each Ethiopian month)
+      const deadline = calculateEthiopianDeadline(month, year);
       
       await client.query(
         `INSERT INTO monthly_periods (annual_plan_id, month, year, target_amount, target_units, deadline)
@@ -646,9 +647,10 @@ export const createAmharicPlan = async (req, res) => {
       createdActivities.push(activityResult.rows[0]);
     }
 
-    // Auto-generate 12 monthly periods
+    // Auto-generate 12 monthly periods with Ethiopian calendar deadlines
     for (let month = 1; month <= 12; month++) {
-      const deadline = new Date(year, month - 1, 18);
+      // Calculate proper Ethiopian calendar deadline (18th day of each Ethiopian month)
+      const deadline = calculateEthiopianDeadline(month, year);
       
       await client.query(
         `INSERT INTO monthly_periods (annual_plan_id, month, year, deadline) 

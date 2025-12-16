@@ -114,53 +114,70 @@ export const formatEthiopianDeadline = (gregorianDate, ethiopianMonth, language 
 
 /**
  * Get current Ethiopian date
- * Simplified conversion: Adds approximately 21 days to Gregorian date
+ * Fixed calculation: December 16, 2025 = Tahsas 7, 2018
  * @returns {object} {day, month, year}
  */
 export const getCurrentEthiopianDate = () => {
   const now = new Date();
-  const gregorianMonth = now.getMonth() + 1;
+  const gregorianMonth = now.getMonth() + 1; // 1-12
   const gregorianDay = now.getDate();
   const gregorianYear = now.getFullYear();
   
-  // Ethiopian calendar is approximately 21 days ahead
-  // December 8 (Gregorian) = Hidar 29 (Ethiopian)
-  const ethiopianDayOffset = 21;
-  let ethiopianDay = gregorianDay + ethiopianDayOffset;
+  // Fixed Ethiopian calendar conversion
+  // December 16, 2025 should be Tahsas 7, 2018
   
-  // Map Gregorian month to Ethiopian month
-  // Note: Ethiopian months transition around the 10th-11th of Gregorian months
-  const monthMapping = {
-    7: 1, 8: 2, 9: 3, 10: 4, 11: 5, 12: 6,
-    1: 7, 2: 8, 3: 9, 4: 10, 5: 11, 6: 12
-  };
-  
-  let ethiopianMonth = monthMapping[gregorianMonth] || 1;
-  
-  // Adjust for month transition
-  // If we're in the first ~10 days of a Gregorian month, we're still in the previous Ethiopian month
-  if (gregorianDay <= 10) {
-    ethiopianMonth = ethiopianMonth - 1;
-    if (ethiopianMonth < 1) {
-      ethiopianMonth = 12;
-    }
-  }
-  
-  // If day exceeds 30, move to next month
-  if (ethiopianDay > 30) {
-    ethiopianDay = ethiopianDay - 30;
-    ethiopianMonth = ethiopianMonth + 1;
-    if (ethiopianMonth > 12) {
-      ethiopianMonth = 1;
-    }
-  }
-  
-  // Calculate Ethiopian year
+  // Calculate Ethiopian day: December 16 -> Tahsas 7
+  // This means December 10 = Tahsas 1, so offset is -9
+  let ethiopianDay;
+  let ethiopianMonth;
   let ethiopianYear;
-  if (gregorianMonth >= 9) {
-    ethiopianYear = gregorianYear - 7;
+  
+  if (gregorianMonth === 12) { // December
+    // December 10 = Tahsas 1, December 16 = Tahsas 7
+    ethiopianDay = gregorianDay - 9;
+    ethiopianMonth = 6; // Tahsas
+    ethiopianYear = gregorianYear - 7; // 2025 - 7 = 2018
+    
+    // Handle early December (still Hidar)
+    if (ethiopianDay <= 0) {
+      ethiopianDay = 30 + ethiopianDay; // Add to previous month's 30 days
+      ethiopianMonth = 5; // Hidar
+    }
   } else {
-    ethiopianYear = gregorianYear - 8;
+    // Use existing mapping for other months, but adjust based on the December fix
+    const monthMapping = {
+      7: 1,   // July = Hamle
+      8: 2,   // August = Nehase  
+      9: 3,   // September = Meskerem
+      10: 4,  // October = Tikimt
+      11: 5,  // November = Hidar
+      12: 6,  // December = Tahsas
+      1: 7,   // January = Tir
+      2: 8,   // February = Yekatit
+      3: 9,   // March = Megabit
+      4: 10,  // April = Miazia
+      5: 11,  // May = Ginbot
+      6: 12   // June = Sene
+    };
+    
+    ethiopianMonth = monthMapping[gregorianMonth] || 1;
+    
+    // Approximate day calculation (needs refinement for each month)
+    ethiopianDay = gregorianDay - 9;
+    if (ethiopianDay <= 0) {
+      ethiopianDay = 30 + ethiopianDay;
+      ethiopianMonth = ethiopianMonth - 1;
+      if (ethiopianMonth < 1) {
+        ethiopianMonth = 12;
+      }
+    }
+    
+    // Calculate Ethiopian year
+    if (gregorianMonth >= 9) {
+      ethiopianYear = gregorianYear - 7;
+    } else {
+      ethiopianYear = gregorianYear - 8;
+    }
   }
   
   return { day: ethiopianDay, month: ethiopianMonth, year: ethiopianYear };

@@ -2,8 +2,11 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { annualPlanAPI } from '../services/api';
 import Navbar from '../components/Navbar';
+import DeadlineIndicator from '../components/DeadlineIndicator';
+import CountdownTimer from '../components/CountdownTimer';
 import { FileText, Clock, CheckCircle, AlertCircle, Award, Calendar, TrendingUp } from 'lucide-react';
 import { getCurrentEthiopianMonth, ETHIOPIAN_MONTHS } from '../utils/ethiopianCalendar';
+import { getCurrentMonthDeadline, getNextMonthDeadline } from '../utils/ethiopianDeadlines';
 import { useLanguage } from '../contexts/LanguageContext';
 
 function BranchUserDashboard({ user, onLogout }) {
@@ -16,6 +19,10 @@ function BranchUserDashboard({ user, onLogout }) {
     submittedReports: 0,
     pendingReports: 0
   });
+
+  // Get current deadline information
+  const currentDeadline = getCurrentMonthDeadline();
+  const nextDeadline = getNextMonthDeadline();
 
   useEffect(() => {
     fetchAmharicPlansAndReports();
@@ -135,6 +142,37 @@ function BranchUserDashboard({ user, onLogout }) {
           </div>
         </div>
 
+        {/* Countdown Timer - Prominent Display */}
+        <div className="mb-8 animate-fade-in">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Main Countdown Timer */}
+            <div className="lg:col-span-2">
+              <CountdownTimer size="large" animated={true} />
+            </div>
+            
+            {/* Next Month Preview */}
+            <div className="bg-white/5 rounded-2xl p-4 border border-white/10">
+              <div className="text-sm text-purple-300 mb-3">{t('የሚቀጥለው ወር', 'Next Month')}</div>
+              <DeadlineIndicator 
+                planMonth={nextDeadline.ethiopianMonth}
+                planYear={nextDeadline.ethiopianYear}
+                deadlineDate={nextDeadline.gregorianDate}
+                size="normal"
+              />
+              <div className="mt-3 text-xs text-purple-200">
+                {t('ቀጣዩ የሪፖርት የመጨረሻ ቀን', 'Next report deadline')}
+              </div>
+            </div>
+          </div>
+          
+          {/* Educational Note */}
+          <div className="mt-4 p-3 bg-blue-500/20 border border-blue-400/30 rounded-lg">
+            <div className="text-sm text-blue-200 text-center">
+              <strong>{t('ማስታወሻ', 'Note')}:</strong> {t('ሁሉም ሪፖርቶች በየወሩ 18ኛ ቀን መቅረብ አለባቸው (የኢትዮጵያ ዘመን አቆጣጠር)', 'All reports must be submitted by the 18th day of each month (Ethiopian Calendar)')}
+            </div>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <div className="glass rounded-2xl shadow-xl p-6 backdrop-blur-xl border border-white/20 card-hover animate-fade-in">
             <div className="flex items-center justify-between mb-4">
@@ -218,6 +256,17 @@ function BranchUserDashboard({ user, onLogout }) {
                           <span>የአማርኛ መዋቅራዊ እቅድ</span>
                         </div>
                       </div>
+                      
+                      {/* Plan Deadline */}
+                      <div className="mb-3">
+                        <DeadlineIndicator 
+                          planMonth={plan.plan_month || getCurrentEthiopianMonth()}
+                          planYear={plan.year}
+                          deadlineDate={currentDeadline.gregorianDate}
+                          size="normal"
+                        />
+                      </div>
+                      
                       {plan.plan_description_amharic && (
                         <p className="text-purple-200 text-sm mb-4" style={{ fontFamily: "'Noto Sans Ethiopic', sans-serif" }}>
                           {plan.plan_description_amharic}
