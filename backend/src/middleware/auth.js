@@ -26,12 +26,7 @@ export const authorizeMainBranch = (req, res, next) => {
   next();
 };
 
-export const authorizeBranchUser = (req, res, next) => {
-  if (req.user.role !== 'branch_user') {
-    return res.status(403).json({ error: 'Access denied. Branch users only.' });
-  }
-  next();
-};
+// Removed - replaced with updated version below
 
 export const authorizeAdmin = (req, res, next) => {
   if (req.user.role !== 'admin') {
@@ -74,6 +69,24 @@ export const authorizeMainBranchOrSector = (req, res, next) => {
   const allowedRoles = ['main_branch', 'organization_sector', 'information_sector', 'operation_sector', 'peace_value_sector'];
   if (!allowedRoles.includes(req.user.role)) {
     return res.status(403).json({ error: 'Access denied. Main branch or sector admin role required.' });
+  }
+  next();
+};
+
+// Woreda sector user authorization
+export const authorizeWoredaSectorUser = (req, res, next) => {
+  const woredaSectorRoles = ['woreda_organization', 'woreda_information', 'woreda_operation', 'woreda_peace_value'];
+  if (!woredaSectorRoles.includes(req.user.role)) {
+    return res.status(403).json({ error: 'Access denied. Woreda sector user role required.' });
+  }
+  next();
+};
+
+// Allow branch users (general or sector-specific)
+export const authorizeBranchUser = (req, res, next) => {
+  const branchRoles = ['branch_user', 'woreda_organization', 'woreda_information', 'woreda_operation', 'woreda_peace_value'];
+  if (!branchRoles.includes(req.user.role)) {
+    return res.status(403).json({ error: 'Access denied. Branch user role required.' });
   }
   next();
 };

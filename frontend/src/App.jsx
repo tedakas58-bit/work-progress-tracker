@@ -26,6 +26,14 @@ function App() {
            user?.role === 'peace_value_sector';
   };
 
+  // Helper function to check if user is a woreda sector user
+  const isWoredaSectorUser = (user) => {
+    return user?.role === 'woreda_organization' ||
+           user?.role === 'woreda_information' ||
+           user?.role === 'woreda_operation' ||
+           user?.role === 'woreda_peace_value';
+  };
+
   useEffect(() => {
     const token = localStorage.getItem('token');
     const userData = localStorage.getItem('user');

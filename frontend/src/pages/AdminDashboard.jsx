@@ -19,7 +19,8 @@ const AdminDashboard = ({ user, onLogout }) => {
     role: 'branch_user',
     branchName: '',
     email: '',
-    phoneNumber: ''
+    phoneNumber: '',
+    sector: ''
   });
   const [resetPassword, setResetPasswordData] = useState({
     userId: null,
@@ -62,7 +63,8 @@ const AdminDashboard = ({ user, onLogout }) => {
         role: 'branch_user',
         branchName: '',
         email: '',
-        phoneNumber: ''
+        phoneNumber: '',
+        sector: ''
       });
       fetchData();
     } catch (error) {
@@ -254,13 +256,22 @@ const AdminDashboard = ({ user, onLogout }) => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          user.role === 'admin' ? 'bg-red-100 text-red-800' :
-                          user.role === 'main_branch' ? 'bg-blue-100 text-blue-800' :
-                          'bg-green-100 text-green-800'
-                        }`}>
-                          {user.role.replace('_', ' ')}
-                        </span>
+                        <div>
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            user.role === 'admin' ? 'bg-red-100 text-red-800' :
+                            user.role === 'main_branch' ? 'bg-blue-100 text-blue-800' :
+                            user.role?.includes('sector') ? 'bg-purple-100 text-purple-800' :
+                            user.role?.includes('woreda') ? 'bg-orange-100 text-orange-800' :
+                            'bg-green-100 text-green-800'
+                          }`}>
+                            {user.role?.replace(/_/g, ' ') || 'Unknown'}
+                          </span>
+                          {user.sector && (
+                            <div className="text-xs text-gray-500 mt-1">
+                              Sector: {user.sector}
+                            </div>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {user.branch_name || '-'}
@@ -373,8 +384,16 @@ const AdminDashboard = ({ user, onLogout }) => {
                   onChange={(e) => setNewUser({...newUser, role: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="branch_user">Woreda User</option>
+                  <option value="branch_user">Woreda User (General)</option>
+                  <option value="woreda_organization">Woreda - Organization Sector</option>
+                  <option value="woreda_information">Woreda - Information Sector</option>
+                  <option value="woreda_operation">Woreda - Operation Sector</option>
+                  <option value="woreda_peace_value">Woreda - Peace & Value Sector</option>
                   <option value="main_branch">Sub-city</option>
+                  <option value="organization_sector">Sub-city - Organization Sector</option>
+                  <option value="information_sector">Sub-city - Information Sector</option>
+                  <option value="operation_sector">Sub-city - Operation Sector</option>
+                  <option value="peace_value_sector">Sub-city - Peace & Value Sector</option>
                   <option value="admin">Admin</option>
                 </select>
               </div>

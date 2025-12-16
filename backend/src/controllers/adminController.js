@@ -235,11 +235,11 @@ export const resetBranchPassword = async (req, res) => {
 export const getAllUsers = async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT id, username, role, branch_name, email, created_at,
+      `SELECT id, username, role, branch_name, email, sector, created_at,
               (SELECT COUNT(*) FROM monthly_reports WHERE branch_user_id = users.id) as total_reports,
               (SELECT COUNT(*) FROM action_reports WHERE branch_user_id = users.id) as total_action_reports
        FROM users 
-       ORDER BY role, branch_name`
+       ORDER BY role, sector, branch_name`
     );
     
     res.json(result.rows);
@@ -256,11 +256,26 @@ export const createUser = async (req, res) => {
   try {
     await client.query('BEGIN');
     
-    const { username, password, role, branchName, email, phoneNumber } = req.body;
+    const { username, password, role, branchName, email, phoneNumber, sector } = req.body;
     
     // Validate role
-    if (!['admin', 'main_branch', 'branch_user'].includes(role)) {
+    const validRoles = [
+      'admin', 'main_branch', 'branch_user',
+      'organization_sector', 'information_sector', 'operation_sector', 'peace_value_sector',
+      'woreda_organization', 'woreda_information', 'woreda_operation', 'woreda_peace_value'
+    ];
+    
+    if (!validRoles.includes(role)) {
       return res.status(400).json({ error: 'Invalid role specified' });
+    }
+    
+    // Determine sector based on role if not provided
+    let userSector = sector;
+    if (!userSector) {
+      if (role.includes('organization')) userSector = 'organization';
+      else if (role.includes('information')) userSector = 'information';
+      else if (role.includes('operation')) userSector = 'operation';
+      else if (role.includes('peace_value')) userSector = 'peace_value';
     }
     
     // Check if username or email already exists
@@ -278,15 +293,15 @@ export const createUser = async (req, res) => {
     
     // Create user
     const result = await client.query(
-      `INSERT INTO users (username, password, role, branch_name, email, phone_number)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, username, role, branch_name, email, phone_number, created_at`,
-      [username, hashedPassword, role, branchName || null, email, phoneNumber || null]
+      `INSERT INTO users (username, password, role, branch_name, email, phone_number, sector)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, username, role, branch_name, email, phone_number, sector, created_at`,
+      [username, hashedPassword, role, branchName || null, email, phoneNumber || null, userSector || null]
     );
     
     const newUser = result.rows[0];
     
-    // If creating a branch user, set up their reports
-    if (role === 'branch_user') {
+    // If creating a branch user or woreda sector user, set up their reports
+    if (role === 'branch_user' || role.startsWith('woreda_')) {
       // Create action reports for existing actions
       const actions = await client.query('SELECT id FROM actions');
       const monthlyPeriods = await client.query('SELECT id FROM monthly_periods');
