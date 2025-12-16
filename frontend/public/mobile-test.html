@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>Mobile Responsiveness Test - ዘመናዊ እቅድ እና ሪፖርት መላኪያ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Mobile and Tablet Responsive Improvements */
+        @media (max-width: 640px) {
+            button, a {
+                min-height: 44px;
+                min-width: 44px;
+            }
+            
+            .container {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+            
+            body {
+                overflow-x: hidden;
+            }
+        }
+
+        @media (hover: none) and (pointer: coarse) {
+            .hover\:scale-105:hover {
+                transform: none;
+            }
+            
+            button:active {
+                transform: scale(0.95);
+                transition: transform 0.1s;
+            }
+        }
+
+        .glass {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 min-h-screen">
+    <!-- Test Navbar -->
+    <nav class="glass border-b border-white/10 sticky top-0 z-50 backdrop-blur-xl">
+        <div class="container mx-auto px-3 sm:px-6 py-3 sm:py-4">
+            <div class="flex justify-between items-center">
+                <!-- Logo and Title - Responsive -->
+                <div class="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0 bg-blue-600">
+                        <img src="/logo.png" alt="Logo" class="w-10 h-10 sm:w-12 sm:h-12 object-contain rounded-xl" />
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <span class="text-sm sm:text-lg lg:text-xl font-bold text-white block truncate leading-tight">
+                            ዘመናዊ እቅድ እና ሪፖርት
+                        </span>
+                        <span class="text-xs text-purple-300 block truncate">
+                            መላኪያ ስርዓት
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- Right Side Controls - Responsive -->
+                <div class="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
+                    <!-- Mobile User Info -->
+                    <div class="lg:hidden flex items-center px-2 py-1 bg-white/5 rounded-lg border border-white/10">
+                        <div class="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-500 rounded-md flex items-center justify-center">
+                            <span class="text-white text-xs">👤</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Language Toggle -->
+                    <button class="flex items-center space-x-1 sm:space-x-2 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white px-2 sm:px-4 py-2 rounded-lg sm:rounded-xl transition transform hover:scale-105 shadow-lg">
+                        <span>🌐</span>
+                        <span class="hidden xs:inline text-xs sm:text-sm font-semibold">አማ</span>
+                    </button>
+                    
+                    <!-- Logout Button -->
+                    <button class="flex items-center space-x-1 sm:space-x-2 bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white px-2 sm:px-4 py-2 rounded-lg sm:rounded-xl transition transform hover:scale-105 shadow-lg">
+                        <span>🚪</span>
+                        <span class="hidden xs:inline text-xs sm:text-sm">ውጣ</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Test Content -->
+    <div class="container mx-auto px-3 sm:px-6 py-6">
+        <div class="glass rounded-2xl p-4 sm:p-6 mb-6">
+            <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4">
+                Mobile Responsiveness Test
+            </h1>
+            <p class="text-purple-200 mb-4">
+                This page tests the mobile and tablet responsiveness of your application.
+            </p>
+            
+            <!-- Test Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div class="bg-white/5 rounded-xl p-4 border border-white/10">
+                    <h3 class="text-white font-semibold mb-2">Mobile (< 640px)</h3>
+                    <p class="text-purple-200 text-sm">Single column layout</p>
+                </div>
+                <div class="bg-white/5 rounded-xl p-4 border border-white/10">
+                    <h3 class="text-white font-semibold mb-2">Tablet (640px+)</h3>
+                    <p class="text-purple-200 text-sm">Two column layout</p>
+                </div>
+                <div class="bg-white/5 rounded-xl p-4 border border-white/10">
+                    <h3 class="text-white font-semibold mb-2">Desktop (1024px+)</h3>
+                    <p class="text-purple-200 text-sm">Four column layout</p>
+                </div>
+                <div class="bg-white/5 rounded-xl p-4 border border-white/10">
+                    <h3 class="text-white font-semibold mb-2">Large (1280px+)</h3>
+                    <p class="text-purple-200 text-sm">Full layout</p>
+                </div>
+            </div>
+
+            <!-- Test Buttons -->
+            <div class="flex flex-col sm:flex-row gap-3 mb-6">
+                <button class="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-4 py-3 rounded-xl transition transform hover:scale-105 shadow-lg font-semibold">
+                    Primary Action
+                </button>
+                <button class="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-4 py-3 rounded-xl transition transform hover:scale-105 shadow-lg font-semibold">
+                    Secondary Action
+                </button>
+            </div>
+
+            <!-- Device Info -->
+            <div class="bg-white/5 rounded-xl p-4 border border-white/10">
+                <h3 class="text-white font-semibold mb-2">Device Information</h3>
+                <div class="text-purple-200 text-sm space-y-1">
+                    <p>Screen Width: <span id="screenWidth"></span>px</p>
+                    <p>Screen Height: <span id="screenHeight"></span>px</p>
+                    <p>Viewport Width: <span id="viewportWidth"></span>px</p>
+                    <p>Viewport Height: <span id="viewportHeight"></span>px</p>
+                    <p>Device Pixel Ratio: <span id="pixelRatio"></span></p>
+                    <p>Touch Support: <span id="touchSupport"></span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateDeviceInfo() {
+            document.getElementById('screenWidth').textContent = screen.width;
+            document.getElementById('screenHeight').textContent = screen.height;
+            document.getElementById('viewportWidth').textContent = window.innerWidth;
+            document.getElementById('viewportHeight').textContent = window.innerHeight;
+            document.getElementById('pixelRatio').textContent = window.devicePixelRatio;
+            document.getElementById('touchSupport').textContent = 'ontouchstart' in window ? 'Yes' : 'No';
+        }
+
+        updateDeviceInfo();
+        window.addEventListener('resize', updateDeviceInfo);
+        window.addEventListener('orientationchange', updateDeviceInfo);
+    </script>
+</body>
+</html>
