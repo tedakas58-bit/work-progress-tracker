@@ -223,7 +223,7 @@ function CreateAmharicPlan({ user, onLogout }) {
             <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                  🎯 ዒላማ እንቅስቃሴዎች
+                  🎯 ተግባራት
                 </h2>
                 <button
                   type="button"
@@ -269,7 +269,7 @@ function CreateAmharicPlan({ user, onLogout }) {
 
                       <div className="md:col-span-2">
                         <label className="block text-sm font-medium text-purple-200 mb-2">
-                          ዒላማ ቁጥር
+                          እቅድ
                         </label>
                         <input
                           type="number"
