@@ -462,8 +462,35 @@ export const getAllAmharicActivityReports = async (req, res) => {
     const currentYear = new Date().getFullYear();
     const currentMonth = new Date().getMonth() + 1; // December = 12
     
-    console.log('=== BACKEND: getAllAmharicActivityReports v3 ===');
+    console.log('=== BACKEND: getAllAmharicActivityReports v4 - WITH SECTOR FILTERING ===');
+    console.log('User role:', req.user.role);
     console.log('Filtering for month:', currentMonth, 'year:', currentYear);
+    
+    // Build sector filter for sector admins and woreda sector users
+    let sectorFilter = '';
+    let queryParams = [currentMonth, currentYear];
+    
+    if (req.user.role !== 'main_branch') {
+      const sectorMap = {
+        'organization_sector': 'organization',
+        'information_sector': 'information',
+        'operation_sector': 'operation',
+        'peace_value_sector': 'peace_value',
+        'woreda_organization': 'organization',
+        'woreda_information': 'information',
+        'woreda_operation': 'operation',
+        'woreda_peace_value': 'peace_value'
+      };
+      
+      const userSector = sectorMap[req.user.role];
+      if (userSector) {
+        sectorFilter = ' AND ap.sector = $3';
+        queryParams.push(userSector);
+        console.log('Filtering by sector:', userSector);
+      }
+    } else {
+      console.log('Main branch user - showing all sectors');
+    }
     
     // First, try to get Amharic activity reports
     const activityReportsResult = await pool.query(
@@ -476,6 +503,7 @@ export const getAllAmharicActivityReports = async (req, res) => {
          ap.goal_amharic,
          ap.plan_month as month,
          ap.year,
+         ap.sector,
          json_agg(
            json_build_object(
              'activity_number', pa.activity_number,
@@ -496,10 +524,10 @@ export const getAllAmharicActivityReports = async (req, res) => {
        JOIN monthly_periods mp ON ar.monthly_period_id = mp.id
        WHERE ap.plan_type = 'amharic_structured'
          AND mp.month = $1
-         AND mp.year = $2
-       GROUP BY u.branch_name, u.username, ap.id, ap.title, ap.plan_title_amharic, ap.goal_amharic, ap.plan_month, ap.year
+         AND mp.year = $2${sectorFilter}
+       GROUP BY u.branch_name, u.username, ap.id, ap.title, ap.plan_title_amharic, ap.goal_amharic, ap.plan_month, ap.year, ap.sector
        ORDER BY u.branch_name`,
-      [currentMonth, currentYear]
+      queryParams
     );
     
     console.log('Activity reports found:', activityReportsResult.rows.length);
@@ -508,6 +536,8 @@ export const getAllAmharicActivityReports = async (req, res) => {
     if (activityReportsResult.rows.length === 0) {
       console.log('No activity reports found, checking for regular monthly reports...');
       
+      // Note: Monthly reports don't have sector filtering as they're from the old system
+      // This is mainly for backward compatibility
       const monthlyReportsResult = await pool.query(
         `SELECT 
            u.branch_name,
