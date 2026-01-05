@@ -4,7 +4,7 @@ import { annualPlanAPI } from '../services/api';
 import Navbar from '../components/Navbar';
 import { ArrowLeft, Plus, Trash2, Save, Target } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
-import { ETHIOPIAN_MONTHS, getCurrentEthiopianMonth } from '../utils/ethiopianCalendar';
+import { ETHIOPIAN_MONTHS, getCurrentEthiopianMonth, getCurrentEthiopianDate } from '../utils/ethiopianCalendar';
 
 function CreateAmharicPlan({ user, onLogout }) {
   const { t } = useLanguage();
@@ -14,7 +14,7 @@ function CreateAmharicPlan({ user, onLogout }) {
     title_amharic: '',
     goal_amharic: '',
     description_amharic: '',
-    year: new Date().getFullYear(),
+    year: getCurrentEthiopianDate().year,
     month: getCurrentEthiopianMonth(),
     plan_type: 'amharic_structured'
   });
@@ -161,14 +161,15 @@ function CreateAmharicPlan({ user, onLogout }) {
 
                 <div>
                   <label className="block text-sm font-medium text-purple-200 mb-2">
-                    ዓመት *
+                    ዓመት (የኢትዮጵያ ዘመን አቆጣጠር) *
                   </label>
                   <input
                     type="number"
                     value={formData.year}
                     onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })}
                     className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition backdrop-blur-sm"
-                    min={new Date().getFullYear()}
+                    min={getCurrentEthiopianDate().year}
+                    placeholder={`ለምሳሌ: ${getCurrentEthiopianDate().year}`}
                     required
                   />
                 </div>
